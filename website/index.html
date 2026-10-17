@@ -1,1 +1,130 @@
-<h1>Welcome to My Website</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feelflix – Movie Emotional Arcs</title>
+<style>
+:root{--bg:#f4f4f6;--surface:#fff;--surface2:#ececf0;--text:#16161a;--muted:#65656f;--accent:#e50914;--line:#d8d8de;
+--joy:#f5b301;--sadness:#3b82f6;--fear:#8b5cf6;--anger:#ef4444;--tension:#f97316;--surprise:#14b8a6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0d10;--surface:#18181d;--surface2:#24242b;--text:#f3f3f5;--muted:#9a9aa6;--line:#2f2f38;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d0d10;--surface:#18181d;--surface2:#24242b;--text:#f3f3f5;--muted:#9a9aa6;--line:#2f2f38;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.4}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;display:flex;align-items:center;gap:16px;padding:14px 4vw;background:var(--bg);border-bottom:1px solid var(--line)}
+.logo{font-weight:800;font-size:24px;letter-spacing:-.5px;color:var(--accent)}
+.search{margin-left:auto;background:var(--surface);border:1px solid var(--line);color:var(--text);padding:9px 14px;border-radius:8px;width:min(260px,45%);font:inherit}
+.hero{padding:7vw 4vw 4vw;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 22%,transparent),transparent)}
+.hero h1{font-size:clamp(28px,5vw,52px);margin:0 0 10px;letter-spacing:-1px;max-width:14em}
+.hero p{margin:0;color:var(--muted);max-width:40em;font-size:clamp(14px,1.6vw,18px)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:18px;font-size:13px;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.chips{display:flex;gap:8px;padding:0 4vw 18px;overflow-x:auto}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:7px 14px;border-radius:99px;cursor:pointer;font:inherit;font-size:13px}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,310px),1fr));gap:18px;padding:0 4vw 60px;align-items:start}
+.card{background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--line);transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.25)}
+.poster{height:130px;padding:14px;display:flex;flex-direction:column;justify-content:flex-end;color:#fff;position:relative}
+.poster h3{margin:0;font-size:20px;letter-spacing:-.3px;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+.poster small{opacity:.9;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.badge{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.45);padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600}
+.body{padding:14px}
+.stack{display:flex;height:8px;border-radius:99px;overflow:hidden;margin-bottom:12px;background:var(--surface2)}
+.rows{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
+.row{display:flex;align-items:center;gap:8px;font-size:13px}
+.row b{margin-left:auto;font-variant-numeric:tabular-nums}
+.btn{margin-top:14px;width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:inherit;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.graph{display:none;margin-top:12px}
+.card.open .graph{display:block}
+.tog{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tog button{font:inherit;font-size:11px;padding:3px 9px;border-radius:99px;border:1px solid var(--c);background:transparent;color:var(--text);cursor:pointer}
+.tog button.on{background:var(--c);color:#fff}
+svg{width:100%;height:auto;display:block;touch-action:none}
+.read{font-size:12px;color:var(--muted);min-height:18px;margin-top:4px}
+.empty{padding:40px 4vw;color:var(--muted)}
+footer{padding:20px 4vw 40px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header><div class="logo">FEELFLIX</div><input class="search" id="q" placeholder="Search films…" aria-label="Search films"></header>
+<section class="hero">
+<h1>Every film has a heartbeat.</h1>
+<p>Browse movies by the emotions they make you feel, then reveal the full emotional arc, minute by minute.</p>
+<div class="legend" id="legend"></div>
+</section>
+<div class="chips" id="chips"></div>
+<main class="grid" id="grid"></main>
+<footer>Demo data for illustration. In production, each card reads <code>works.profile</code> and the <code>emotion_5m</code> continuous aggregate.</footer>
+
+<script>
+const EM=[["joy","Joy"],["sadness","Sadness"],["fear","Fear"],["anger","Anger"],["tension","Tension"],["surprise","Surprise"]];
+const COL=Object.fromEntries(EM.map(([k])=>[k,getComputedStyle(document.documentElement).getPropertyValue("--"+k).trim()]));
+const FILMS=[
+{t:"The Long Goodbye",y:2019,m:124,g:"Drama",w:{joy:.25,sadness:.9,fear:.2,anger:.3,tension:.35,surprise:.2}},
+{t:"Midnight Corridor",y:2021,m:108,g:"Horror",w:{joy:.08,sadness:.3,fear:.95,anger:.25,tension:.85,surprise:.5}},
+{t:"Sunday Parade",y:2018,m:96,g:"Comedy",w:{joy:.95,sadness:.12,fear:.08,anger:.15,tension:.2,surprise:.45}},
+{t:"Redline",y:2022,m:131,g:"Thriller",w:{joy:.12,sadness:.2,fear:.5,anger:.5,tension:.95,surprise:.55}},
+{t:"Paper Lanterns",y:2017,m:112,g:"Romance",w:{joy:.7,sadness:.55,fear:.1,anger:.12,tension:.3,surprise:.3}},
+{t:"Iron Verdict",y:2020,m:142,g:"Crime",w:{joy:.1,sadness:.3,fear:.35,anger:.9,tension:.7,surprise:.35}},
+{t:"Orbit Seven",y:2023,m:119,g:"Sci‑Fi",w:{joy:.3,sadness:.3,fear:.55,anger:.2,tension:.8,surprise:.75}},
+{t:"Summer of Kites",y:2016,m:101,g:"Family",w:{joy:.85,sadness:.4,fear:.12,anger:.1,tension:.25,surprise:.4}}
+];
+function rng(s){return()=>(s=Math.imul(s^s>>>15,s|1),s^=s+Math.imul(s^s>>>7,s|61),((s^s>>>14)>>>0)/4294967296)}
+FILMS.forEach((f,i)=>{const r=rng(i*977+13);f.id=i;f.pts=[];const N=60,ph={};
+ EM.forEach(([k])=>ph[k]=[r()*6,r()*6,r()*6,r()*.8+.1]);
+ for(let n=0;n<N;n++){const x=n/(N-1),p={x};
+  EM.forEach(([k])=>{const a=ph[k];let v=f.w[k]*(.55+.3*Math.sin(x*5+a[0])+.22*Math.sin(x*11+a[1])+.12*Math.sin(x*23+a[2]));
+   v+=(k==="tension"||k==="fear"?.35*Math.exp(-((x-.88)**2)/.01)*f.w[k]:0)+(r()-.5)*.06;p[k]=Math.max(.02,Math.min(1,v))});
+  f.pts.push(p)}
+ const avg={};EM.forEach(([k])=>avg[k]=f.pts.reduce((s,p)=>s+p[k],0)/N);
+ const tot=Object.values(avg).reduce((a,b)=>a+b,0);f.pct={};EM.forEach(([k])=>f.pct[k]=avg[k]/tot*100);
+ f.top=EM.map(e=>e[0]).sort((a,b)=>f.pct[b]-f.pct[a])[0]});
+const $=s=>document.querySelector(s);
+$("#legend").innerHTML=EM.map(([k,l])=>`<span><i class="dot" style="background:${COL[k]}"></i>${l}</span>`).join("");
+let filter="all",query="";
+$("#chips").innerHTML=[["all","All"],...EM].map(([k,l])=>`<button class="chip${k==="all"?" on":""}" data-k="${k}">${k==="all"?l:"Most "+l.toLowerCase()}</button>`).join("");
+$("#chips").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;filter=b.dataset.k;document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));render()};
+$("#q").oninput=e=>{query=e.target.value.toLowerCase();render()};
+
+function chart(f,card){
+ const W=320,H=170,L=26,B=22,T=8,R=6,on=card._on,sv=card.querySelector("svg");
+ const X=x=>L+x*(W-L-R),Y=v=>T+(1-v)*(H-T-B);
+ let s=[0,.25,.5,.75,1].map(v=>`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-4}" y="${Y(v)+3}" text-anchor="end" font-size="8" fill="var(--muted)">${Math.round(v*100)}</text>`).join("");
+ [0,.25,.5,.75,1].forEach(x=>s+=`<text x="${X(x)}" y="${H-6}" text-anchor="middle" font-size="8" fill="var(--muted)">${Math.round(x*f.m)}m</text>`);
+ EM.forEach(([k])=>{if(!on.has(k))return;s+=`<path d="${f.pts.map((p,i)=>(i?"L":"M")+X(p.x).toFixed(1)+" "+Y(p[k]).toFixed(1)).join("")}" fill="none" stroke="${COL[k]}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`});
+ s+=`<line class="cur" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-dasharray="3 3" opacity="0"/>`;
+ sv.innerHTML=s;sv.setAttribute("viewBox",`0 0 ${W} ${H}`);
+}
+function bind(f,card){
+ const sv=card.querySelector("svg"),rd=card.querySelector(".read");
+ const move=e=>{const r=sv.getBoundingClientRect(),cx=(e.touches?e.touches[0].clientX:e.clientX);
+  const x=Math.max(0,Math.min(1,((cx-r.left)/r.width*320-26)/288)),p=f.pts[Math.round(x*59)],c=sv.querySelector(".cur");
+  c.setAttribute("x1",26+x*288);c.setAttribute("x2",26+x*288);c.setAttribute("opacity",1);
+  rd.innerHTML=`<b style="color:var(--text)">${Math.round(x*f.m)} min</b> · `+EM.filter(([k])=>card._on.has(k)).map(([k])=>`<span style="color:${COL[k]}">${Math.round(p[k]*100)}</span>`).join(" · ")};
+ sv.onmousemove=move;sv.ontouchmove=move;sv.onmouseleave=()=>{sv.querySelector(".cur").setAttribute("opacity",0);rd.textContent="Hover the graph to read values"};
+}
+function render(){
+ const list=FILMS.filter(f=>f.t.toLowerCase().includes(query)||f.g.toLowerCase().includes(query)).sort((a,b)=>filter==="all"?a.id-b.id:b.pct[filter]-a.pct[filter]);
+ const g=$("#grid");g.innerHTML=list.length?"":`<div class="empty">No films match your search.</div>`;
+ list.forEach(f=>{
+  const c=document.createElement("article");c.className="card";c._on=new Set(EM.map(e=>e[0]));
+  const sorted=EM.slice().sort((a,b)=>f.pct[b[0]]-f.pct[a[0]]);
+  c.innerHTML=`<div class="poster" style="background:linear-gradient(160deg,${COL[f.top]},#1a1a22 85%)"><span class="badge">Mostly ${f.top}</span><h3>${f.t}</h3><small>${f.y} · ${f.g} · ${Math.floor(f.m/60)}h ${f.m%60}m</small></div>
+  <div class="body"><div class="stack">${sorted.map(([k])=>`<div style="width:${f.pct[k]}%;background:${COL[k]}"></div>`).join("")}</div>
+  <div class="rows">${EM.map(([k,l])=>`<div class="row"><i class="dot" style="background:${COL[k]};margin:0"></i>${l}<b>${Math.round(f.pct[k])}%</b></div>`).join("")}</div>
+  <button class="btn" aria-expanded="false">Show emotion graph</button>
+  <div class="graph"><div class="tog">${EM.map(([k,l])=>`<button class="on" style="--c:${COL[k]}" data-k="${k}">${l}</button>`).join("")}</div><svg role="img" aria-label="Emotions over time for ${f.t}"></svg><div class="read">Hover the graph to read values</div></div></div>`;
+  const btn=c.querySelector(".btn");
+  btn.onclick=()=>{const o=c.classList.toggle("open");btn.textContent=o?"Hide emotion graph":"Show emotion graph";btn.setAttribute("aria-expanded",o);if(o)chart(f,c)};
+  c.querySelector(".tog").onclick=e=>{const b=e.target.closest("button");if(!b)return;const k=b.dataset.k;c._on.has(k)?c._on.delete(k):c._on.add(k);b.classList.toggle("on");chart(f,c)};
+  bind(f,c);g.appendChild(c)});
+}
+render();
+</script>
+</body>
+</html>
