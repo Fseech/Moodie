@@ -11,6 +11,7 @@ CREATE TABLE works (
     work_id       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title         TEXT        NOT NULL,
     year          SMALLINT,
+    genre         TEXT,                                    -- catalog genre shown by the film browser
     medium        TEXT        NOT NULL DEFAULT 'film'      -- film | book | screenplay
                               CHECK (medium IN ('film','book','screenplay')),
     source        TEXT        NOT NULL DEFAULT 'srt',      -- srt | gutenberg | imsdb | upload
@@ -21,8 +22,9 @@ CREATE TABLE works (
     windows_total INTEGER,
     windows_done  INTEGER     NOT NULL DEFAULT 0,
     model         TEXT,                                    -- e.g. gemini-2.5-flash
-    profile       JSONB,                                   -- per-film summary for recommendations:
-                                                           -- {avg:{joy..}, peak:{joy..}, curve:[20 valence pts], tags:[...]}
+    profile       JSONB,                                   -- cached film-card summary:
+                                                           -- {avg:{joy,sadness,fear,anger,tension,surprise},
+                                                           --  peak:{joy,sadness,fear,anger,tension,surprise}}
     error         TEXT,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -135,6 +137,21 @@ SELECT add_compression_policy('emotion_points', INTERVAL '7 days');
 -- FROM emotion_points
 -- WHERE work_id = $1
 -- GROUP BY 1 ORDER BY 1;
+
+-- Film-card data for the website. The six values in profile.avg are model
+-- scores (0..1); normalize them in the API to the percentages shown by the UI.
+-- SELECT work_id, title, year, genre, runtime_ms, profile->'avg' AS avg_emotions
+-- FROM works
+-- WHERE medium = 'film' AND status = 'ready' AND profile IS NOT NULL
+-- ORDER BY title;
+
+-- Default website timeline at five-minute resolution; convert minute to the
+-- chart's x-axis and preserve each emotion as its independent 0..1 score.
+-- SELECT extract(epoch FROM bucket) / 60.0 AS minute,
+--        joy, sadness, fear, anger, tension, surprise
+-- FROM emotion_5m
+-- WHERE work_id = $1
+-- ORDER BY bucket;
 
 -- Normalized arc for comparing two works (x = 0..100 % of runtime, 50 buckets):
 -- SELECT floor(extract(epoch FROM t) * 1000.0 / w.runtime_ms * 50) AS pct_bucket,
