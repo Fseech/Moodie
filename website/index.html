@@ -37,10 +37,10 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;display:flex;a
 .rows{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
 .row{display:flex;align-items:center;gap:8px;font-size:13px}
 .row b{margin-left:auto;font-variant-numeric:tabular-nums}
-.btn{margin-top:14px;width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:inherit;font-weight:600;cursor:pointer}
+.btns{display:flex;gap:8px}.btn{margin-top:14px;flex:1;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font:inherit;font-weight:600;cursor:pointer}
 .btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
 .graph{display:none;margin-top:12px}
-.card.open .graph{display:block}
+.card.open .graph{display:block}.graph2{display:none;margin-top:12px}.card.open2 .graph2{display:block}
 .tog{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .tog button{font:inherit;font-size:11px;padding:3px 9px;border-radius:99px;border:1px solid var(--c);background:transparent;color:var(--text);cursor:pointer}
 .tog button.on{background:var(--c);color:#fff}
@@ -80,7 +80,7 @@ FILMS.forEach((f,i)=>{const r=rng(i*977+13);f.id=i;f.pts=[];const N=60,ph={};
  for(let n=0;n<N;n++){const x=n/(N-1),p={x};
   EM.forEach(([k])=>{const a=ph[k];let v=f.w[k]*(.55+.3*Math.sin(x*5+a[0])+.22*Math.sin(x*11+a[1])+.12*Math.sin(x*23+a[2]));
    v+=(k==="tension"||k==="fear"?.35*Math.exp(-((x-.88)**2)/.01)*f.w[k]:0)+(r()-.5)*.06;p[k]=Math.max(.02,Math.min(1,v))});
-  f.pts.push(p)}
+  p.val=Math.max(-1,Math.min(1,(1.3*p.joy+.2*p.surprise-p.sadness-.9*p.fear-.9*p.anger-.25*p.tension)*1.1));f.pts.push(p)}
  const avg={};EM.forEach(([k])=>avg[k]=f.pts.reduce((s,p)=>s+p[k],0)/N);
  const tot=Object.values(avg).reduce((a,b)=>a+b,0);f.pct={};EM.forEach(([k])=>f.pct[k]=avg[k]/tot*100);
  f.top=EM.map(e=>e[0]).sort((a,b)=>f.pct[b]-f.pct[a])[0]});
@@ -108,6 +108,26 @@ function bind(f,card){
   rd.innerHTML=`<b style="color:var(--text)">${Math.round(x*f.m)} min</b> · `+EM.filter(([k])=>card._on.has(k)).map(([k])=>`<span style="color:${COL[k]}">${Math.round(p[k]*100)}</span>`).join(" · ")};
  sv.onmousemove=move;sv.ontouchmove=move;sv.onmouseleave=()=>{sv.querySelector(".cur").setAttribute("opacity",0);rd.textContent="Hover the graph to read values"};
 }
+function vchart(f,c){
+ const sv=c.querySelector(".vs"),W=320,H=180,L=30,B=22,T=8,R=6,X=x=>L+x*(W-L-R),Y=v=>T+(1-(v+1)/2)*(H-T-B),z=Y(0);
+ const ln=f.pts.map((p,i)=>(i?"L":"M")+X(p.x).toFixed(1)+" "+Y(p.val).toFixed(1)).join("");
+ const area=ln+`L${X(1)} ${z}L${X(0)} ${z}Z`;
+ let s=`<defs><clipPath id="up${f.id}"><rect x="${L}" y="${T}" width="${W-L-R}" height="${z-T}"/></clipPath><clipPath id="dn${f.id}"><rect x="${L}" y="${z}" width="${W-L-R}" height="${H-B-z}"/></clipPath></defs>`;
+ [-1,-.5,0,.5,1].forEach(v=>s+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v?"var(--line)":"var(--muted)"}" stroke-width="1"/><text x="${L-4}" y="${Y(v)+3}" text-anchor="end" font-size="8" fill="var(--muted)">${v===1?"Warm":v===-1?"Dark":v===0?"Mid":""}</text>`);
+ [0,.25,.5,.75,1].forEach(x=>s+=`<text x="${X(x)}" y="${H-6}" text-anchor="middle" font-size="8" fill="var(--muted)">${Math.round(x*f.m)}m</text>`);
+ s+=`<path d="${area}" fill="#ff9f1c" opacity=".55" clip-path="url(#up${f.id})"/><path d="${area}" fill="#5b4bdb" opacity=".55" clip-path="url(#dn${f.id})"/><path d="${ln}" fill="none" stroke="var(--text)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+ s+=`<text x="${L+4}" y="${T+9}" font-size="8" fill="#ff9f1c" font-weight="700">WARM</text><text x="${L+4}" y="${H-B-4}" font-size="8" fill="#7c6cff" font-weight="700">DARK</text>`;
+ s+=`<line class="cur" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-dasharray="3 3" opacity="0"/>`;
+ sv.innerHTML=s;sv.setAttribute("viewBox",`0 0 ${W} ${H}`);
+}
+function bindV(f,c){
+ const sv=c.querySelector(".vs"),rd=c.querySelector(".read2");
+ const move=e=>{const r=sv.getBoundingClientRect(),cx=(e.touches?e.touches[0].clientX:e.clientX);
+  const x=Math.max(0,Math.min(1,((cx-r.left)/r.width*320-30)/284)),p=f.pts[Math.round(x*59)],cu=sv.querySelector(".cur");
+  cu.setAttribute("x1",30+x*284);cu.setAttribute("x2",30+x*284);cu.setAttribute("opacity",1);
+  const pos=p.val>=0;rd.innerHTML=`<b style="color:var(--text)">${Math.round(x*f.m)} min</b> · <span style="color:${pos?"#ff9f1c":"#7c6cff"}">${Math.abs(p.val)<.1?"Neutral":pos?"Warm":"Dark"} (${pos?"+":""}${p.val.toFixed(2)})</span>`};
+ sv.onmousemove=move;sv.ontouchmove=move;sv.onmouseleave=()=>{sv.querySelector(".cur").setAttribute("opacity",0);rd.textContent="Hover to see sentiment"};
+}
 function render(){
  const list=FILMS.filter(f=>f.t.toLowerCase().includes(query)||f.g.toLowerCase().includes(query)).sort((a,b)=>filter==="all"?a.id-b.id:b.pct[filter]-a.pct[filter]);
  const g=$("#grid");g.innerHTML=list.length?"":`<div class="empty">No films match your search.</div>`;
@@ -117,12 +137,14 @@ function render(){
   c.innerHTML=`<div class="poster" style="background:linear-gradient(160deg,${COL[f.top]},#1a1a22 85%)"><span class="badge">Mostly ${f.top}</span><h3>${f.t}</h3><small>${f.y} · ${f.g} · ${Math.floor(f.m/60)}h ${f.m%60}m</small></div>
   <div class="body"><div class="stack">${sorted.map(([k])=>`<div style="width:${f.pct[k]}%;background:${COL[k]}"></div>`).join("")}</div>
   <div class="rows">${EM.map(([k,l])=>`<div class="row"><i class="dot" style="background:${COL[k]};margin:0"></i>${l}<b>${Math.round(f.pct[k])}%</b></div>`).join("")}</div>
-  <button class="btn" aria-expanded="false">Show emotion graph</button>
-  <div class="graph"><div class="tog">${EM.map(([k,l])=>`<button class="on" style="--c:${COL[k]}" data-k="${k}">${l}</button>`).join("")}</div><svg role="img" aria-label="Emotions over time for ${f.t}"></svg><div class="read">Hover the graph to read values</div></div></div>`;
+  <div class="btns"><button class="btn" aria-expanded="false">Show emotion graph</button><button class="btn btn2" aria-expanded="false">Show moodline</button></div>
+  <div class="graph"><div class="tog">${EM.map(([k,l])=>`<button class="on" style="--c:${COL[k]}" data-k="${k}">${l}</button>`).join("")}</div><svg role="img" aria-label="Emotions over time for ${f.t}"></svg><div class="read">Hover the graph to read values</div></div><div class="graph2"><svg class="vs" role="img" aria-label="Moodline, warm versus dark, over time for ${f.t}"></svg><div class="read read2">Hover to see sentiment</div></div></div>`;
   const btn=c.querySelector(".btn");
   btn.onclick=()=>{const o=c.classList.toggle("open");btn.textContent=o?"Hide emotion graph":"Show emotion graph";btn.setAttribute("aria-expanded",o);if(o)chart(f,c)};
   c.querySelector(".tog").onclick=e=>{const b=e.target.closest("button");if(!b)return;const k=b.dataset.k;c._on.has(k)?c._on.delete(k):c._on.add(k);b.classList.toggle("on");chart(f,c)};
-  bind(f,c);g.appendChild(c)});
+  const b2=c.querySelector(".btn2");
+  b2.onclick=()=>{const o=c.classList.toggle("open2");b2.textContent=o?"Hide moodline":"Show moodline";b2.setAttribute("aria-expanded",o);if(o)vchart(f,c)};
+  bindV(f,c);bind(f,c);g.appendChild(c)});
 }
 render();
 </script>
