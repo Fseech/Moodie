@@ -16,6 +16,7 @@ erDiagram
         bigint work_id PK
         text title
         smallint year
+        text genre
         text medium
         text source
         bigint runtime_ms
@@ -108,6 +109,7 @@ One row per film (or book / screenplay later). Plain table. Also carries job sta
 | `work_id` | bigint PK | identity |
 | `title` | text | |
 | `year` | smallint | nullable |
+| `genre` | text | nullable; displayed and searchable in the film browser |
 | `medium` | text | `film` (v1), `book`, `screenplay` |
 | `source` | text | `srt`, `gutenberg`, `imsdb`, `upload` |
 | `runtime_ms` | bigint | set after parsing; needed for %-of-runtime comparisons |
@@ -159,7 +161,74 @@ Same shape as `emotion_points` with an extra `character` key, for per-character 
 
 5-minute `time_bucket` of `emotion_points`, averaged. Refreshed every minute by policy. Use for the default chart view; use raw `time_bucket()` for other resolutions.
 
+## Website data contract
+
+The film browser presents one row per `works` record with:
+
+| Website field or behavior | Database source |
+|---|---|
+| Film title | `works.title` |
+| Year | `works.year` |
+| Genre search and label | `works.genre` |
+| Runtime label and timeline scale | `works.runtime_ms` (convert to minutes in the API/UI) |
+| Emotion distribution and dominant emotion | `works.profile->'avg'` |
+| Emotion-over-time graph | `emotion_5m` columns `joy`, `sadness`, `fear`, `anger`, `tension`, and `surprise`, ordered by `bucket` |
+| Film search | `works.title` and `works.genre` |
+| Emotion sort | The corresponding value inside `works.profile->'avg'` |
+
+`works.profile` is a cached JSON object with this shape:
+
+```json
+{
+  "avg": {
+    "joy": 0.32,
+    "sadness": 0.18,
+    "fear": 0.07,
+    "anger": 0.05,
+    "tension": 0.14,
+    "surprise": 0.09
+  },
+  "peak": {
+    "joy": 0.81,
+    "sadness": 0.64,
+    "fear": 0.42,
+    "anger": 0.39,
+    "tension": 0.76,
+    "surprise": 0.58
+  }
+}
+```
+
+Each profile value is an independent model score from 0 to 1; emotion scores do not have to sum to 1. Compute `avg` over the non-NULL scored windows and `peak` as the maximum score per emotion. To reproduce the website's percentage distribution, divide each average by the sum of the six averages and multiply by 100. The highest average is the dominant emotion. Timeline values remain independent 0–1 scores and should not be normalized against one another. A chart time is `extract(epoch FROM bucket) / 60.0` minutes because film time is stored as an epoch offset.
+
+The current website still uses local illustrative data and is not connected to a database or API. This contract describes the production data it should consume; the sample titles and scores in the page are not production records.
+
+For an existing database created before `genre` was added, apply this one-time migration:
+
+```sql
+ALTER TABLE works ADD COLUMN IF NOT EXISTS genre TEXT;
+```
+
 ## Query cookbook
+
+Film-card records for the website:
+
+```sql
+SELECT work_id, title, year, genre, runtime_ms, profile
+FROM works
+WHERE medium = 'film' AND status = 'ready' AND profile IS NOT NULL
+ORDER BY title;
+```
+
+Five-minute emotion timeline for one film (`$1` = work_id):
+
+```sql
+SELECT extract(epoch FROM bucket) / 60.0 AS minute,
+       joy, sadness, fear, anger, tension, surprise
+FROM emotion_5m
+WHERE work_id = $1
+ORDER BY bucket;
+```
 
 Arc at arbitrary resolution (`$1` = work_id, `$2` = bucket seconds):
 
