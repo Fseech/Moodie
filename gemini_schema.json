@@ -1,0 +1,26 @@
+{
+  "$comment": "Pass as response_schema with response_mime_type=application/json. One request scores a batch of windows; the API maps results back by window_idx.",
+  "type": "object",
+  "properties": {
+    "windows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "window_idx": { "type": "integer", "description": "Echo of the index given in the prompt" },
+          "valence":    { "type": "number", "minimum": -1, "maximum": 1, "description": "Overall emotional tone, -1 very negative to 1 very positive" },
+          "arousal":    { "type": "number", "minimum": 0,  "maximum": 1, "description": "Intensity or energy, 0 calm to 1 frantic" },
+          "joy":        { "type": "number", "minimum": 0,  "maximum": 1 },
+          "sadness":    { "type": "number", "minimum": 0,  "maximum": 1 },
+          "fear":       { "type": "number", "minimum": 0,  "maximum": 1 },
+          "anger":      { "type": "number", "minimum": 0,  "maximum": 1 },
+          "tension":    { "type": "number", "minimum": 0,  "maximum": 1, "description": "Suspense or anticipation, independent of valence" },
+          "surprise":   { "type": "number", "minimum": 0,  "maximum": 1 },
+          "summary":    { "type": "string", "description": "One sentence, present tense, no spoilers beyond this window, max 20 words" }
+        },
+        "required": ["window_idx", "valence", "arousal", "joy", "sadness", "fear", "anger", "tension", "surprise", "summary"]
+      }
+    }
+  },
+  "required": ["windows"]
+}
