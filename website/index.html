@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MoodLine – Movie Emotional Arcs</title>
+<title>Moodie</title>
 <style>
 :root{--bg:#f4f4f6;--surface:#fff;--surface2:#ececf0;--text:#16161a;--muted:#65656f;--accent:#e50914;--line:#d8d8de;
 --joy:#f5b301;--sadness:#3b82f6;--fear:#8b5cf6;--anger:#ef4444;--tension:#f97316;--surprise:#14b8a6;
@@ -16,13 +16,23 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",system-
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;display:flex;align-items:center;gap:16px;padding:14px 4vw;background:var(--bg);border-bottom:1px solid var(--line)}
 .logo{font-weight:800;font-size:24px;letter-spacing:-.5px;color:var(--accent)}
-.search{margin-left:auto;background:var(--surface);border:1px solid var(--line);color:var(--text);padding:9px 14px;border-radius:8px;width:min(260px,45%);font:inherit}
-.hero{padding:7vw 4vw 4vw;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 22%,transparent),transparent)}
-.hero h1{font-size:clamp(28px,5vw,52px);margin:0 0 10px;letter-spacing:-1px;max-width:14em}
+.hero{padding:7vw 4vw 4vw;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 22%,transparent),transparent);text-align:center}
+.hero h1{font-size:clamp(28px,5vw,52px);margin:0 auto 10px;letter-spacing:-1px;max-width:14em}
 .hero p{margin:0;color:var(--muted);max-width:40em;font-size:clamp(14px,1.6vw,18px)}
-.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:18px;font-size:13px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;margin-top:18px;font-size:13px;color:var(--muted)}
+.search-controls{display:flex;align-items:stretch;gap:12px;width:min(100%,820px);margin:28px auto 0;text-align:left}
+.search-wrap{display:flex;flex:1;min-width:0}
+.search{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line);color:var(--text);padding:11px 14px;border-radius:8px;font:inherit}
+.emotion-filter{display:grid;grid-template-columns:auto minmax(115px,1fr);align-items:center;gap:4px 10px;width:min(100%,340px);padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.emotion-filter label{font-size:12px;color:var(--muted)}
+.emotion-filter select{grid-column:2;grid-row:1;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.emotion-filter .threshold-label{grid-column:1;grid-row:2;white-space:nowrap}
+.emotion-filter output{color:var(--text);font-variant-numeric:tabular-nums}
+.emotion-filter input{grid-column:2;grid-row:2;width:100%;accent-color:var(--accent)}
+.emotion-filter input:disabled{opacity:.5}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
-.chips{display:flex;gap:8px;padding:0 4vw 18px;overflow-x:auto}
+.chips{display:flex;justify-content:center;gap:8px;padding:0 4vw 18px;overflow-x:auto}
 .chip{flex:none;border:1px solid var(--line);background:var(--surface);color:var(--text);padding:7px 14px;border-radius:99px;cursor:pointer;font:inherit;font-size:13px}
 .chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,310px),1fr));gap:18px;padding:0 4vw 60px;align-items:start}
@@ -48,48 +58,77 @@ svg{width:100%;height:auto;display:block;touch-action:none}
 .read{font-size:12px;color:var(--muted);min-height:18px;margin-top:4px}
 .empty{padding:40px 4vw;color:var(--muted)}
 footer{padding:20px 4vw 40px;color:var(--muted);font-size:12px}
+@media(max-width:600px){.hero{padding:12vw 5vw 8vw}.search-controls{flex-direction:column;gap:10px;margin-top:22px}.emotion-filter{width:100%}.chips{justify-content:flex-start}}
 </style>
 </head>
 <body>
-<header><div class="logo">FEELFLIX</div><input class="search" id="q" placeholder="Search films…" aria-label="Search films"></header>
+<header><div class="logo">MOODIE</div></header>
 <section class="hero">
-<h1>Every film has a heartbeat.</h1>
-<p>Browse movies by the emotions they make you feel, then reveal the full emotional arc, minute by minute.</p>
+<h1>What are you in the mood to feel?</h1>
+<div class="search-controls">
+<label class="search-wrap"><span class="sr-only">Search films</span><input class="search" id="q" placeholder="Search films…" aria-label="Search films"></label>
+<div class="emotion-filter">
+<label for="emotion">Emotion</label><select id="emotion" aria-label="Choose an emotion"><option value="">Any emotion</option></select>
+<label class="threshold-label" for="threshold">At least <output id="threshold-value" for="threshold">20%</output></label><input id="threshold" type="range" min="0" max="100" step="5" value="20" aria-label="Minimum emotion percentage" disabled>
+</div>
+</div>
 <div class="legend" id="legend"></div>
 </section>
 <div class="chips" id="chips"></div>
-<main class="grid" id="grid"></main>
-<footer>Demo data for illustration. In production, each card reads <code>works.profile</code> and the <code>emotion_5m</code> continuous aggregate.</footer>
+<main class="grid" id="grid" aria-live="polite"></main>
+<footer>Emotion values and mood charts are scored from each film’s subtitles and loaded from the Moodie database.</footer>
 
 <script>
 const EM=[["joy","Joy"],["sadness","Sadness"],["fear","Fear"],["anger","Anger"],["tension","Tension"],["surprise","Surprise"]];
 const COL=Object.fromEntries(EM.map(([k])=>[k,getComputedStyle(document.documentElement).getPropertyValue("--"+k).trim()]));
-const FILMS=[
-{t:"The Long Goodbye",y:2019,m:124,g:"Drama",w:{joy:.25,sadness:.9,fear:.2,anger:.3,tension:.35,surprise:.2}},
-{t:"Midnight Corridor",y:2021,m:108,g:"Horror",w:{joy:.08,sadness:.3,fear:.95,anger:.25,tension:.85,surprise:.5}},
-{t:"Sunday Parade",y:2018,m:96,g:"Comedy",w:{joy:.95,sadness:.12,fear:.08,anger:.15,tension:.2,surprise:.45}},
-{t:"Redline",y:2022,m:131,g:"Thriller",w:{joy:.12,sadness:.2,fear:.5,anger:.5,tension:.95,surprise:.55}},
-{t:"Paper Lanterns",y:2017,m:112,g:"Romance",w:{joy:.7,sadness:.55,fear:.1,anger:.12,tension:.3,surprise:.3}},
-{t:"Iron Verdict",y:2020,m:142,g:"Crime",w:{joy:.1,sadness:.3,fear:.35,anger:.9,tension:.7,surprise:.35}},
-{t:"Orbit Seven",y:2023,m:119,g:"Sci‑Fi",w:{joy:.3,sadness:.3,fear:.55,anger:.2,tension:.8,surprise:.75}},
-{t:"Summer of Kites",y:2016,m:101,g:"Family",w:{joy:.85,sadness:.4,fear:.12,anger:.1,tension:.25,surprise:.4}}
-];
-function rng(s){return()=>(s=Math.imul(s^s>>>15,s|1),s^=s+Math.imul(s^s>>>7,s|61),((s^s>>>14)>>>0)/4294967296)}
-FILMS.forEach((f,i)=>{const r=rng(i*977+13);f.id=i;f.pts=[];const N=60,ph={};
- EM.forEach(([k])=>ph[k]=[r()*6,r()*6,r()*6,r()*.8+.1]);
- for(let n=0;n<N;n++){const x=n/(N-1),p={x};
-  EM.forEach(([k])=>{const a=ph[k];let v=f.w[k]*(.55+.3*Math.sin(x*5+a[0])+.22*Math.sin(x*11+a[1])+.12*Math.sin(x*23+a[2]));
-   v+=(k==="tension"||k==="fear"?.35*Math.exp(-((x-.88)**2)/.01)*f.w[k]:0)+(r()-.5)*.06;p[k]=Math.max(.02,Math.min(1,v))});
-  p.val=Math.max(-1,Math.min(1,(1.3*p.joy+.2*p.surprise-p.sadness-.9*p.fear-.9*p.anger-.25*p.tension)*1.1));f.pts.push(p)}
- const avg={};EM.forEach(([k])=>avg[k]=f.pts.reduce((s,p)=>s+p[k],0)/N);
- const tot=Object.values(avg).reduce((a,b)=>a+b,0);f.pct={};EM.forEach(([k])=>f.pct[k]=avg[k]/tot*100);
- f.top=EM.map(e=>e[0]).sort((a,b)=>f.pct[b]-f.pct[a])[0]});
 const $=s=>document.querySelector(s);
 $("#legend").innerHTML=EM.map(([k,l])=>`<span><i class="dot" style="background:${COL[k]}"></i>${l}</span>`).join("");
-let filter="all",query="";
+$("#emotion").innerHTML+=EM.map(([k,l])=>`<option value="${k}">${l}</option>`).join("");
+let films=[],filmsLoaded=false,loadError="",filter="all",query="",selectedEmotion="",minEmotion=20;
 $("#chips").innerHTML=[["all","All"],...EM].map(([k,l])=>`<button class="chip${k==="all"?" on":""}" data-k="${k}">${k==="all"?l:"Most "+l.toLowerCase()}</button>`).join("");
 $("#chips").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;filter=b.dataset.k;document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c===b));render()};
 $("#q").oninput=e=>{query=e.target.value.toLowerCase();render()};
+$("#emotion").onchange=e=>{selectedEmotion=e.target.value;$("#threshold").disabled=!selectedEmotion;render()};
+$("#threshold").oninput=e=>{minEmotion=Number(e.target.value);$("#threshold-value").textContent=`${minEmotion}%`;render()};
+function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))}
+async function loadFilms(){
+ const grid=$("#grid");
+ try{
+  const response=await fetch("/api/films");
+  if(!response.ok)throw new Error(`Server returned HTTP ${response.status}`);
+  const rows=await response.json();
+  if(!Array.isArray(rows))throw new Error("Unexpected movie data response");
+  films=rows.map(row=>{
+   const w=Object.fromEntries(EM.map(([key])=>[key,Number(row.emotions[key])]));
+   const total=Object.values(w).reduce((sum,value)=>sum+value,0);
+   const pct=Object.fromEntries(EM.map(([key])=>[key,total?w[key]/total*100:0]));
+   return {id:row.id,t:row.title,y:row.year,m:row.runtime_min,g:row.genre||"Unknown genre",w,pct,top:EM.map(([key])=>key).sort((a,b)=>pct[b]-pct[a])[0],pts:null,pointsRequest:null};
+  });
+  filmsLoaded=true;
+  render();
+ }catch(error){
+  loadError="Could not load movies from the database. Start the local Moodie server and check its database configuration.";
+  console.error("Movie data request failed:",error);
+  grid.innerHTML=`<div class="empty" role="alert">${escapeHTML(loadError)}</div>`;
+ }
+}
+async function loadPoints(film){
+ if(film.pts)return film.pts;
+ if(!film.pointsRequest)film.pointsRequest=(async()=>{
+  const response=await fetch(`/api/films/${encodeURIComponent(film.id)}/points`);
+  if(!response.ok)throw new Error(`Server returned HTTP ${response.status}`);
+  const rows=await response.json();
+  if(!Array.isArray(rows))throw new Error("Unexpected emotion data response");
+  film.pts=rows.map(row=>{
+   const minute=Number(row.minute);
+   return {minute,x:film.m>0?minute/film.m:0,...Object.fromEntries(EM.map(([key])=>[key,Number(row[key])])),val:Number(row.valence)};
+  });
+  if(!film.pts.length)throw new Error("No emotion points are available for this movie");
+  return film.pts;
+ })();
+ try{return await film.pointsRequest}
+ finally{film.pointsRequest=null}
+}
 
 function chart(f,card){
  const W=320,H=170,L=26,B=22,T=8,R=6,on=card._on,sv=card.querySelector("svg");
@@ -103,9 +142,9 @@ function chart(f,card){
 function bind(f,card){
  const sv=card.querySelector("svg"),rd=card.querySelector(".read");
  const move=e=>{const r=sv.getBoundingClientRect(),cx=(e.touches?e.touches[0].clientX:e.clientX);
-  const x=Math.max(0,Math.min(1,((cx-r.left)/r.width*320-26)/288)),p=f.pts[Math.round(x*59)],c=sv.querySelector(".cur");
+  const x=Math.max(0,Math.min(1,((cx-r.left)/r.width*320-26)/288)),p=f.pts.reduce((best,point)=>Math.abs(point.x-x)<Math.abs(best.x-x)?point:best),c=sv.querySelector(".cur");
   c.setAttribute("x1",26+x*288);c.setAttribute("x2",26+x*288);c.setAttribute("opacity",1);
-  rd.innerHTML=`<b style="color:var(--text)">${Math.round(x*f.m)} min</b> · `+EM.filter(([k])=>card._on.has(k)).map(([k])=>`<span style="color:${COL[k]}">${Math.round(p[k]*100)}</span>`).join(" · ")};
+  rd.innerHTML=`<b style="color:var(--text)">${Math.round(p.minute)} min</b> · `+EM.filter(([k])=>card._on.has(k)).map(([k])=>`<span style="color:${COL[k]}">${Math.round(p[k]*100)}</span>`).join(" · ")};
  sv.onmousemove=move;sv.ontouchmove=move;sv.onmouseleave=()=>{sv.querySelector(".cur").setAttribute("opacity",0);rd.textContent="Hover the graph to read values"};
 }
 function vchart(f,c){
@@ -123,30 +162,34 @@ function vchart(f,c){
 function bindV(f,c){
  const sv=c.querySelector(".vs"),rd=c.querySelector(".read2");
  const move=e=>{const r=sv.getBoundingClientRect(),cx=(e.touches?e.touches[0].clientX:e.clientX);
-  const x=Math.max(0,Math.min(1,((cx-r.left)/r.width*320-30)/284)),p=f.pts[Math.round(x*59)],cu=sv.querySelector(".cur");
+  const x=Math.max(0,Math.min(1,((cx-r.left)/r.width*320-30)/284)),p=f.pts.reduce((best,point)=>Math.abs(point.x-x)<Math.abs(best.x-x)?point:best),cu=sv.querySelector(".cur");
   cu.setAttribute("x1",30+x*284);cu.setAttribute("x2",30+x*284);cu.setAttribute("opacity",1);
-  const pos=p.val>=0;rd.innerHTML=`<b style="color:var(--text)">${Math.round(x*f.m)} min</b> · <span style="color:${pos?"#ff9f1c":"#7c6cff"}">${Math.abs(p.val)<.1?"Neutral":pos?"Warm":"Dark"} (${pos?"+":""}${p.val.toFixed(2)})</span>`};
+  const pos=p.val>=0;rd.innerHTML=`<b style="color:var(--text)">${Math.round(p.minute)} min</b> · <span style="color:${pos?"#ff9f1c":"#7c6cff"}">${Math.abs(p.val)<.1?"Neutral":pos?"Warm":"Dark"} (${pos?"+":""}${p.val.toFixed(2)})</span>`};
  sv.onmousemove=move;sv.ontouchmove=move;sv.onmouseleave=()=>{sv.querySelector(".cur").setAttribute("opacity",0);rd.textContent="Hover to see sentiment"};
 }
 function render(){
- const list=FILMS.filter(f=>f.t.toLowerCase().includes(query)||f.g.toLowerCase().includes(query)).sort((a,b)=>filter==="all"?a.id-b.id:b.pct[filter]-a.pct[filter]);
- const g=$("#grid");g.innerHTML=list.length?"":`<div class="empty">No films match your search.</div>`;
+ const g=$("#grid");
+ if(loadError){g.innerHTML=`<div class="empty" role="alert">${escapeHTML(loadError)}</div>`;return}
+ if(!filmsLoaded){g.innerHTML=`<div class="empty" role="status">Loading movies from the database…</div>`;return}
+ const list=films.filter(f=>(f.t.toLowerCase().includes(query)||f.g.toLowerCase().includes(query))&&(!selectedEmotion||Math.round(f.pct[selectedEmotion])>=minEmotion)).sort((a,b)=>filter==="all"?a.t.localeCompare(b.t):b.pct[filter]-a.pct[filter]);
+ g.innerHTML=list.length?"":`<div class="empty">${films.length?"No films match these filters.":"No scored movies are in the database yet. Add a film and its subtitle emotion scores, then reload."}</div>`;
  list.forEach(f=>{
   const c=document.createElement("article");c.className="card";c._on=new Set(EM.map(e=>e[0]));
   const sorted=EM.slice().sort((a,b)=>f.pct[b[0]]-f.pct[a[0]]);
-  c.innerHTML=`<div class="poster" style="background:linear-gradient(160deg,${COL[f.top]},#1a1a22 85%)"><span class="badge">Mostly ${f.top}</span><h3>${f.t}</h3><small>${f.y} · ${f.g} · ${Math.floor(f.m/60)}h ${f.m%60}m</small></div>
+  c.innerHTML=`<div class="poster" style="background:linear-gradient(160deg,${COL[f.top]},#1a1a22 85%)"><span class="badge">Mostly ${f.top}</span><h3>${escapeHTML(f.t)}</h3><small>${escapeHTML(f.y??"Year unknown")} · ${escapeHTML(f.g)} · ${Math.floor(f.m/60)}h ${f.m%60}m</small></div>
   <div class="body"><div class="stack">${sorted.map(([k])=>`<div style="width:${f.pct[k]}%;background:${COL[k]}"></div>`).join("")}</div>
   <div class="rows">${EM.map(([k,l])=>`<div class="row"><i class="dot" style="background:${COL[k]};margin:0"></i>${l}<b>${Math.round(f.pct[k])}%</b></div>`).join("")}</div>
   <div class="btns"><button class="btn" aria-expanded="false">Show emotion graph</button><button class="btn btn2" aria-expanded="false">Show moodline</button></div>
-  <div class="graph"><div class="tog">${EM.map(([k,l])=>`<button class="on" style="--c:${COL[k]}" data-k="${k}">${l}</button>`).join("")}</div><svg role="img" aria-label="Emotions over time for ${f.t}"></svg><div class="read">Hover the graph to read values</div></div><div class="graph2"><svg class="vs" role="img" aria-label="Moodline, warm versus dark, over time for ${f.t}"></svg><div class="read read2">Hover to see sentiment</div></div></div>`;
+  <div class="graph"><div class="tog">${EM.map(([k,l])=>`<button class="on" style="--c:${COL[k]}" data-k="${k}">${l}</button>`).join("")}</div><svg role="img" aria-label="Emotions over time for ${escapeHTML(f.t)}"></svg><div class="read">Hover the graph to read values</div></div><div class="graph2"><svg class="vs" role="img" aria-label="Moodline, warm versus dark, over time for ${escapeHTML(f.t)}"></svg><div class="read read2">Hover to see sentiment</div></div></div>`;
   const btn=c.querySelector(".btn");
-  btn.onclick=()=>{const o=c.classList.toggle("open");btn.textContent=o?"Hide emotion graph":"Show emotion graph";btn.setAttribute("aria-expanded",o);if(o)chart(f,c)};
+  btn.onclick=async()=>{const o=c.classList.toggle("open");btn.textContent=o?"Hide emotion graph":"Show emotion graph";btn.setAttribute("aria-expanded",o);if(o){const read=c.querySelector(".read");read.textContent="Loading emotion data…";try{await loadPoints(f);if(c.isConnected&&c.classList.contains("open")){chart(f,c);read.textContent="Hover the graph to read values"}}catch(error){console.error(`Could not load emotion data for movie ${f.id}:`,error);read.textContent="Could not load this movie’s emotion data. Try again."}}};
   c.querySelector(".tog").onclick=e=>{const b=e.target.closest("button");if(!b)return;const k=b.dataset.k;c._on.has(k)?c._on.delete(k):c._on.add(k);b.classList.toggle("on");chart(f,c)};
   const b2=c.querySelector(".btn2");
-  b2.onclick=()=>{const o=c.classList.toggle("open2");b2.textContent=o?"Hide moodline":"Show moodline";b2.setAttribute("aria-expanded",o);if(o)vchart(f,c)};
+  b2.onclick=async()=>{const o=c.classList.toggle("open2");b2.textContent=o?"Hide moodline":"Show moodline";b2.setAttribute("aria-expanded",o);if(o){const read=c.querySelector(".read2");read.textContent="Loading emotion data…";try{await loadPoints(f);if(c.isConnected&&c.classList.contains("open2")){vchart(f,c);read.textContent="Hover to see sentiment"}}catch(error){console.error(`Could not load moodline data for movie ${f.id}:`,error);read.textContent="Could not load this movie’s moodline. Try again."}}};
   bindV(f,c);bind(f,c);g.appendChild(c)});
 }
 render();
+loadFilms();
 </script>
 </body>
 </html>

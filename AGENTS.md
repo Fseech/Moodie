@@ -17,15 +17,15 @@ Context: this is a team entry for **SwampHacks** (University of Florida hackatho
 
 ---
 
-## 2. Architecture (two separate programs)
+## 2. Architecture
 
 **A. Prep pipeline — runs offline, once per movie**
 `.srt file in data/ → parse → chunk into windows → Gemini scoring → insert into Tiger Data`
 
 **B. Live app — what the judges see**
-`website/ → Tiger Data (read only)`
+`browser → website/server.py → Tiger Data (read only)`
 
-There is **no separate API server** (no FastAPI). The website reads the database directly. A browser cannot open a Postgres connection itself, and the connection string must never ship in client-side JS — so the website's DB queries must run server-side within the website project (see Section 3, "Website DB access").
+`website/server.py` serves the page and its read-only JSON endpoints using Python's standard library HTTP server. A browser cannot open a Postgres connection itself, and the connection string must never ship in client-side JS.
 
 The live app **never calls Gemini**. All scoring happens ahead of time. This keeps the demo fast and immune to API rate limits or outages.
 
@@ -38,11 +38,9 @@ The live app **never calls Gemini**. All scoring happens ahead of time. This kee
 | LLM | Gemini API via `google-genai` Python SDK, model `gemini-3.5-flash` | Decided |
 | Database | Tiger Data (Tiger Cloud Free Plan), TimescaleDB hypertable | Decided |
 | Pipeline language | Python 3.9+ | Decided |
-| API server | None — website reads the DB directly. Not FastAPI. | Decided |
+| Website server | Python standard-library HTTP server in `website/server.py` | Decided for local use |
 | Frontend | `website/index.html` — single HTML page, vanilla JS, hand-drawn SVG charts | In progress |
-| Website DB access | How `website/` runs its queries server-side (e.g. a serverless function, or framework server routes) | **Open — confirm with team** |
-
-Do not lock in an open choice without the team confirming.
+| Website DB access | Read-only queries through `website/server.py`; Tiger URL stays in root `.env` | Decided for local use |
 
 ---
 
@@ -63,8 +61,8 @@ Do not lock in an open choice without the team confirming.
 │   ├── schema.sql        ← DDL (source of truth)
 │   ├── run_schema.py     ← applies schema.sql using TIMESCALE_SERVICE_URL
 │   └── drop_old_schema.sql ← one-off: removes the original larger schema
-├── pipeline/             ← .srt parsing, chunking, Gemini scoring, DB loading (only an empty index.html so far)
-└── website/index.html    ← FEELFLIX page (currently on generated demo data)
+├── pipeline/             ← .srt parsing, chunking, Gemini scoring, DB loading
+└── website/              ← index.html frontend and server.py local read-only web/API server
 ```
 
 Ownership: each teammate owns one folder (website, pipeline, db, data) to avoid merge conflicts. Shared files (`db/schema.sql`, `gemini_schema.json`, `.env.example`, dependency manifests) should be changed deliberately and mentioned in the commit message.
@@ -74,16 +72,18 @@ Ownership: each teammate owns one folder (website, pipeline, db, data) to avoid 
 ## 5. Current state
 
 **Exists:**
-- `website/index.html` — full UI (cards, search, filter chips, emotion graph, moodline) running on **generated demo data** (`FILMS` array in the script). Needs to be switched to real DB data.
+- `website/index.html` — full UI (cards, search, filter chips, emotion graph, moodline) loaded from the local server API. No fake film data remains.
+- `website/server.py` — serves the page and read-only film/arc endpoints backed by Tiger Data. Run with `py -3 website\server.py`; open `http://127.0.0.1:8000`.
 - `db/schema.sql` — trimmed to exactly what the website displays (Section 6). The **old, larger schema was probably already applied** to Tiger Data via `run_schema.py`; if so, run `db/drop_old_schema.sql` once, then `run_schema.py`.
 - `gemini_schema.json` — matches the `emotion_points` columns.
 - `data/his_girl_friday.srt` — first movie. Its timestamps use 2-digit fractions (`00:01:01,95`), and the text looks auto-transcribed (noisy). The parser must accept 1–3 fraction digits.
 - `.gitignore`, `.env.example`, `test_gemini.py`.
 - Python must be installed locally (3.9+) with `pip install google-genai python-dotenv psycopg2-binary`. Don't commit `venv/`.
+- The configured Tiger Data database currently has zero films or emotion points. Run the scoring pipeline to populate it; the website will show an empty state until then.
 
 **Security:** `.env` with the Tiger Data password was committed and pushed. It is now untracked, but it's still in git history, so **the Tiger Data password must be reset** in the Tiger Cloud console and everyone's local `.env` updated.
 
-**Not started:** pipeline code, website DB access, rest of the sample library.
+**Not started:** scoring the available subtitle files and adding more films to the sample library.
 
 ---
 
@@ -103,19 +103,19 @@ Not used by the website, so **not stored**: arousal, summaries, posters, subtitl
 
 ### 6.1 Data shapes the website consumes
 
-The current demo `FILMS` array uses short keys. The DB-backed data should provide:
+The film-list API returns:
 
 Film list
 ```json
-[{ "work_id": 1, "title": "His Girl Friday", "year": 1940, "genre": "Comedy", "runtime_min": 92,
-   "joy": 0.41, "sadness": 0.12, "fear": 0.08, "anger": 0.22, "tension": 0.35, "surprise": 0.18 }]
+[{ "id": 1, "title": "His Girl Friday", "year": 1940, "genre": "Comedy", "runtime_min": 92,
+   "emotions": { "joy": 0.41, "sadness": 0.12, "fear": 0.08, "anger": 0.22, "tension": 0.35, "surprise": 0.18 } }]
 ```
 
-One film's arc
+`GET /api/films/{id}/points` returns one film's arc:
 ```json
 [{ "minute": 0, "joy": 0.1, "sadness": 0.2, "fear": 0.5, "anger": 0.1, "tension": 0.6, "surprise": 0.2, "valence": -0.2 }]
 ```
-Silent windows (no dialogue) are omitted; the chart connects across the gap. The page currently assumes exactly 60 evenly spaced points per film — when wiring real data, compute x as `minute / runtime_min` instead.
+Silent windows (no dialogue) are omitted; the chart connects across the gap. The page computes graph x-coordinates as `minute / runtime_min` and fetches arc points on demand.
 
 ### 6.2 Gemini output (`gemini_schema.json`)
 Batch request; response `{ "windows": [ { window_idx, valence, joy, sadness, fear, anger, tension, surprise } ] }`. `valence` −1…1, the rest 0…1, all required. Pass via `response_mime_type="application/json"` + `response_schema`.
@@ -136,8 +136,8 @@ Get **one movie working end to end** before doing anything else.
 3. `pipeline/`: parse `data/his_girl_friday.srt` → cues → 2-minute windows (skip windows with no dialogue).
 4. Score windows with Gemini using `gemini_schema.json`, a few windows per request. Short delay between calls; retry on HTTP 429 (`RESOURCE_EXHAUSTED`). Skip films whose title is already in `works`.
 5. Insert into `works` and `emotion_points` (SQL in `SCHEMA.md`). Check the arc query looks sensible.
-6. Website DB access: decide the server-side approach, run the two queries in `SCHEMA.md`, return the shapes in 6.1.
-7. Replace the demo `FILMS` data in `website/index.html` with the real data; update its footer text (it still mentions `works.profile` and `emotion_5m`, which no longer exist).
+6. Start the local website with `py -3 website\server.py`; the server reads the DB connection string from root `.env` and exposes read-only queries.
+7. Score at least one movie into Tiger Data, then verify its card, emotion graph, and moodline on the website.
 8. Add 6–10 public-domain films to `data/` and score them.
 
 ---

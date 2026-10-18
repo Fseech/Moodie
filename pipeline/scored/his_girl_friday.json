@@ -1,0 +1,416 @@
+{
+ "0": {
+  "valence": 0.1,
+  "joy": 0.1,
+  "sadness": 0.0,
+  "fear": 0.0,
+  "anger": 0.1,
+  "tension": 0.1,
+  "surprise": 0.0
+ },
+ "1": {
+  "valence": 0.0,
+  "joy": 0.1,
+  "sadness": 0.1,
+  "fear": 0.1,
+  "anger": 0.1,
+  "tension": 0.3,
+  "surprise": 0.1
+ },
+ "2": {
+  "valence": 0.2,
+  "joy": 0.3,
+  "sadness": 0.1,
+  "fear": 0.0,
+  "anger": 0.2,
+  "tension": 0.2,
+  "surprise": 0.1
+ },
+ "3": {
+  "valence": -0.1,
+  "joy": 0.2,
+  "sadness": 0.1,
+  "fear": 0.0,
+  "anger": 0.4,
+  "tension": 0.3,
+  "surprise": 0.2
+ },
+ "4": {
+  "valence": 0.0,
+  "joy": 0.2,
+  "sadness": 0.1,
+  "fear": 0.1,
+  "anger": 0.3,
+  "tension": 0.4,
+  "surprise": 0.5
+ },
+ "5": {
+  "valence": 0.2,
+  "joy": 0.3,
+  "sadness": 0.1,
+  "fear": 0.0,
+  "anger": 0.2,
+  "tension": 0.3,
+  "surprise": 0.2
+ },
+ "6": {
+  "valence": 0.3,
+  "joy": 0.4,
+  "sadness": 0.0,
+  "fear": 0.0,
+  "anger": 0.1,
+  "tension": 0.3,
+  "surprise": 0.3
+ },
+ "7": {
+  "valence": 0.3,
+  "joy": 0.4,
+  "sadness": 0.0,
+  "fear": 0.0,
+  "anger": 0.1,
+  "tension": 0.3,
+  "surprise": 0.1
+ },
+ "8": {
+  "valence": 0.2,
+  "joy": 0.3,
+  "sadness": 0.1,
+  "fear": 0.0,
+  "anger": 0.1,
+  "tension": 0.3,
+  "surprise": 0.2
+ },
+ "9": {
+  "valence": 0.1,
+  "joy": 0.3,
+  "sadness": 0.0,
+  "fear": 0.1,
+  "anger": 0.2,
+  "tension": 0.4,
+  "surprise": 0.2
+ },
+ "10": {
+  "valence": -0.1,
+  "joy": 0.2,
+  "sadness": 0.2,
+  "fear": 0.1,
+  "anger": 0.1,
+  "tension": 0.4,
+  "surprise": 0.1
+ },
+ "11": {
+  "valence": 0.2,
+  "joy": 0.3,
+  "sadness": 0.1,
+  "fear": 0.0,
+  "anger": 0.1,
+  "tension": 0.3,
+  "surprise": 0.1
+ },
+ "12": {
+  "valence": 0.3,
+  "joy": 0.5,
+  "sadness": 0.0,
+  "fear": 0.0,
+  "anger": 0.0,
+  "tension": 0.2,
+  "surprise": 0.2
+ },
+ "13": {
+  "valence": 0.1,
+  "joy": 0.3,
+  "sadness": 0.2,
+  "fear": 0.0,
+  "anger": 0.0,
+  "tension": 0.2,
+  "surprise": 0.1
+ },
+ "14": {
+  "valence": 0.2,
+  "joy": 0.4,
+  "sadness": 0.1,
+  "fear": 0.0,
+  "anger": 0.0,
+  "tension": 0.3,
+  "surprise": 0.1
+ },
+ "15": {
+  "valence": 0.3,
+  "joy": 0.4,
+  "sadness": 0.0,
+  "fear": 0.0,
+  "anger": 0.0,
+  "tension": 0.3,
+  "surprise": 0.1
+ },
+ "16": {
+  "valence": -0.2,
+  "joy": 0.1,
+  "sadness": 0.4,
+  "fear": 0.2,
+  "anger": 0.0,
+  "tension": 0.3,
+  "surprise": 0.1
+ },
+ "17": {
+  "valence": 0.1,
+  "joy": 0.2,
+  "sadness": 0.2,
+  "fear": 0.0,
+  "anger": 0.0,
+  "tension": 0.2,
+  "surprise": 0.1
+ },
+ "18": {
+  "valence": -0.5,
+  "joy": 0.0,
+  "sadness": 0.6,
+  "fear": 0.1,
+  "anger": 0.7,
+  "tension": 0.6,
+  "surprise": 0.3
+ },
+ "19": {
+  "valence": -0.2,
+  "joy": 0.1,
+  "sadness": 0.4,
+  "fear": 0.2,
+  "anger": 0.3,
+  "tension": 0.5,
+  "surprise": 0.4
+ },
+ "20": {
+  "valence": -0.2,
+  "joy": 0.1,
+  "sadness": 0.2,
+  "fear": 0.2,
+  "anger": 0.3,
+  "tension": 0.4,
+  "surprise": 0.3
+ },
+ "21": {
+  "valence": -0.3,
+  "joy": 0.1,
+  "sadness": 0.2,
+  "fear": 0.1,
+  "anger": 0.7,
+  "tension": 0.5,
+  "surprise": 0.4
+ },
+ "22": {
+  "valence": -0.2,
+  "joy": 0.1,
+  "sadness": 0.3,
+  "fear": 0.2,
+  "anger": 0.2,
+  "tension": 0.4,
+  "surprise": 0.3
+ },
+ "23": {
+  "valence": -0.3,
+  "joy": 0.2,
+  "sadness": 0.1,
+  "fear": 0.4,
+  "anger": 0.3,
+  "tension": 0.8,
+  "surprise": 0.8
+ },
+ "24": {
+  "valence": 0.1,
+  "joy": 0.5,
+  "sadness": 0.0,
+  "fear": 0.3,
+  "anger": 0.2,
+  "tension": 0.7,
+  "surprise": 0.6
+ },
+ "25": {
+  "valence": -0.2,
+  "joy": 0.2,
+  "sadness": 0.1,
+  "fear": 0.3,
+  "anger": 0.4,
+  "tension": 0.6,
+  "surprise": 0.4
+ },
+ "26": {
+  "valence": -0.4,
+  "joy": 0.1,
+  "sadness": 0.1,
+  "fear": 0.2,
+  "anger": 0.6,
+  "tension": 0.6,
+  "surprise": 0.3
+ },
+ "27": {
+  "valence": -0.6,
+  "joy": 0.0,
+  "sadness": 0.1,
+  "fear": 0.4,
+  "anger": 0.5,
+  "tension": 0.7,
+  "surprise": 0.5
+ },
+ "28": {
+  "valence": -0.5,
+  "joy": 0.0,
+  "sadness": 0.1,
+  "fear": 0.3,
+  "anger": 0.4,
+  "tension": 0.6,
+  "surprise": 0.2
+ },
+ "29": {
+  "valence": -0.3,
+  "joy": 0.1,
+  "sadness": 0.1,
+  "fear": 0.6,
+  "anger": 0.3,
+  "tension": 0.9,
+  "surprise": 0.8
+ },
+ "30": {
+  "valence": -0.6,
+  "joy": 0.0,
+  "sadness": 0.4,
+  "fear": 0.6,
+  "anger": 0.2,
+  "tension": 0.8,
+  "surprise": 0.4
+ },
+ "31": {
+  "valence": -0.3,
+  "joy": 0.1,
+  "sadness": 0.2,
+  "fear": 0.5,
+  "anger": 0.2,
+  "tension": 0.7,
+  "surprise": 0.2
+ },
+ "32": {
+  "valence": -0.7,
+  "joy": 0.0,
+  "sadness": 0.6,
+  "fear": 0.5,
+  "anger": 0.4,
+  "tension": 0.85,
+  "surprise": 0.6
+ },
+ "33": {
+  "valence": 0.2,
+  "joy": 0.5,
+  "sadness": 0.1,
+  "fear": 0.3,
+  "anger": 0.2,
+  "tension": 0.8,
+  "surprise": 0.4
+ },
+ "34": {
+  "valence": -0.1,
+  "joy": 0.2,
+  "sadness": 0.1,
+  "fear": 0.3,
+  "anger": 0.3,
+  "tension": 0.75,
+  "surprise": 0.3
+ },
+ "35": {
+  "valence": -0.2,
+  "joy": 0.1,
+  "sadness": 0.3,
+  "fear": 0.2,
+  "anger": 0.4,
+  "tension": 0.6,
+  "surprise": 0.2
+ },
+ "36": {
+  "valence": 0.3,
+  "joy": 0.5,
+  "sadness": 0.0,
+  "fear": 0.2,
+  "anger": 0.1,
+  "tension": 0.6,
+  "surprise": 0.3
+ },
+ "37": {
+  "valence": -0.1,
+  "joy": 0.3,
+  "sadness": 0.1,
+  "fear": 0.3,
+  "anger": 0.3,
+  "tension": 0.7,
+  "surprise": 0.5
+ },
+ "38": {
+  "valence": -0.4,
+  "joy": 0.1,
+  "sadness": 0.2,
+  "fear": 0.5,
+  "anger": 0.6,
+  "tension": 0.8,
+  "surprise": 0.3
+ },
+ "39": {
+  "valence": -0.5,
+  "joy": 0.0,
+  "sadness": 0.1,
+  "fear": 0.6,
+  "anger": 0.6,
+  "tension": 0.9,
+  "surprise": 0.5
+ },
+ "40": {
+  "valence": -0.4,
+  "joy": 0.1,
+  "sadness": 0.1,
+  "fear": 0.3,
+  "anger": 0.6,
+  "tension": 0.8,
+  "surprise": 0.4
+ },
+ "41": {
+  "valence": -0.5,
+  "joy": 0.0,
+  "sadness": 0.1,
+  "fear": 0.4,
+  "anger": 0.6,
+  "tension": 0.9,
+  "surprise": 0.3
+ },
+ "42": {
+  "valence": 0.3,
+  "joy": 0.5,
+  "sadness": 0.0,
+  "fear": 0.1,
+  "anger": 0.3,
+  "tension": 0.6,
+  "surprise": 0.7
+ },
+ "43": {
+  "valence": 0.4,
+  "joy": 0.5,
+  "sadness": 0.2,
+  "fear": 0.0,
+  "anger": 0.2,
+  "tension": 0.3,
+  "surprise": 0.2
+ },
+ "44": {
+  "valence": 0.3,
+  "joy": 0.4,
+  "sadness": 0.3,
+  "fear": 0.0,
+  "anger": 0.1,
+  "tension": 0.4,
+  "surprise": 0.5
+ },
+ "45": {
+  "valence": 0.7,
+  "joy": 0.8,
+  "sadness": 0.0,
+  "fear": 0.0,
+  "anger": 0.1,
+  "tension": 0.2,
+  "surprise": 0.3
+ }
+}
