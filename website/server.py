@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 INDEX = ROOT / "website" / "index.html"
 POSTERS_PATH = ROOT / "website" / "posters.json"
 MOVIE_IMAGES = ROOT / "movie_images"
+OUTFIT_FONT_PATH = ROOT / "website" / "fonts" / "outfit-latin-variable.woff2"
 EMOTIONS = ("joy", "sadness", "fear", "anger", "surprise")
 load_dotenv(ROOT / ".env")
 
@@ -78,6 +79,10 @@ class MoodieHandler(BaseHTTPRequestHandler):
             self.serve_movie_image(image_match.group(1))
             return
 
+        if path == "/fonts/outfit-latin-variable.woff2":
+            self.serve_outfit_font()
+            return
+
         try:
             if path == "/api/films":
                 self.serve_films()
@@ -123,6 +128,21 @@ class MoodieHandler(BaseHTTPRequestHandler):
 
         self.send_response(200)
         self.send_header("Content-Type", "image/jpeg")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def serve_outfit_font(self):
+        try:
+            content = OUTFIT_FONT_PATH.read_bytes()
+        except OSError:
+            logging.exception("Could not read the Outfit webfont")
+            self.send_json(500, {"error": "The website font could not be loaded."})
+            return
+
+        self.send_response(200)
+        self.send_header("Content-Type", "font/woff2")
         self.send_header("Cache-Control", "no-cache")
         self.send_header("Content-Length", str(len(content)))
         self.end_headers()

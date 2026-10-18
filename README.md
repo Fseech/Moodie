@@ -33,6 +33,9 @@ hosted art. Restart the website server after changing the poster configuration
 or server code. Movies without a configured or loadable poster keep the
 existing gradient card header.
 
+The page uses the self-hosted Outfit variable font in `website/fonts/`, licensed
+under the SIL Open Font License 1.1; its license is included alongside the font.
+
 From the `Swamphacks` directory, run the commands for the films you want to
 score and load into Tiger Data:
 

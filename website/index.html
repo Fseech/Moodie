@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Moodie</title>
+<link rel="preload" href="/fonts/outfit-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:"Outfit";src:url("/fonts/outfit-latin-variable.woff2") format("woff2");font-style:normal;font-weight:400 800;font-display:swap}
 :root{--bg:#f4f4f6;--surface:#fff;--surface2:#ececf0;--text:#16161a;--muted:#65656f;--accent:#e50914;--line:#d8d8de;
 --joy:#f5b301;--sadness:#3b82f6;--fear:#8b5cf6;--anger:#ef4444;--surprise:#14b8a6;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
@@ -12,14 +14,16 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 :root[data-theme="dark"]{--bg:#0d0d10;--surface:#18181d;--surface2:#24242b;--text:#f3f3f5;--muted:#9a9aa6;--line:#2f2f38;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.4}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45;font-optical-sizing:auto}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;display:flex;align-items:center;gap:16px;padding:14px 4vw;background:var(--bg);border-bottom:1px solid var(--line)}
 .logo{font-weight:800;font-size:24px;letter-spacing:-.5px;color:var(--accent)}
-.hero{padding:7vw 4vw 4vw;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 22%,transparent),transparent);text-align:center}
-.hero h1{font-size:clamp(28px,5vw,52px);margin:0 auto 10px;letter-spacing:-1px;max-width:14em}
+.hero{padding:7vw 4vw 4vw;background:#1f2a51;color:#fff;text-align:center}
+.hero h1{font-size:clamp(28px,5vw,52px);font-weight:700;line-height:1.08;margin:0 auto 10px;letter-spacing:-.02em;max-width:14em;text-wrap:balance}
 .hero p{margin:0;color:var(--muted);max-width:40em;font-size:clamp(14px,1.6vw,18px)}
 .legend{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px;margin-top:18px;font-size:13px;color:var(--muted)}
+.hero .legend{color:#fae8e9}
+.hero .emotion-filter label{color:#fff;font-size:13px;font-weight:600}
 .search-controls{display:flex;align-items:stretch;gap:12px;width:min(100%,820px);margin:28px auto 0;text-align:left}
 .search-wrap{display:flex;flex:1;min-width:0}
 .search{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line);color:var(--text);padding:11px 14px;border-radius:8px;font:inherit}
@@ -193,7 +197,6 @@ function render(){
   <div class="rows">${EM.map(([k,l])=>`<div class="row"><i class="dot" style="background:${COL[k]};margin:0"></i>${l}<b>${Math.round(f.pct[k])}%</b></div>`).join("")}</div>
   <div class="btns"><button class="btn" aria-expanded="false">Show emotion graph</button><button class="btn btn2" aria-expanded="false">Show moodline</button></div>
   <div class="graph"><div class="tog">${EM.map(([k,l])=>`<button class="on" style="--c:${COL[k]}" data-k="${k}">${l}</button>`).join("")}</div><svg role="img" aria-label="Emotions over time for ${escapeHTML(f.t)}"></svg><div class="read">Hover the graph to read values</div></div><div class="graph2"><svg class="vs" role="img" aria-label="Moodline, warm versus dark, over time for ${escapeHTML(f.t)}"></svg><div class="read read2">Hover to see sentiment</div></div></div>`;
-  const posterImage=c.querySelector(".poster-art");
   const posterElement=c.querySelector(".poster-art");
   if(posterElement)posterElement.onerror=()=>{c.querySelector(".poster.with-poster").classList.remove("with-poster");posterElement.closest(".poster-art-link").remove();c.querySelector(".poster-copy").classList.remove("poster-copy");const source=c.querySelector(".poster-source");if(source)source.remove()};
   const btn=c.querySelector(".btn");
