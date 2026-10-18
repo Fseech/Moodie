@@ -1,35 +1,33 @@
 #!/usr/bin/env python3
-"""Score one movie's subtitles with Gemini and load them into Tiger Data (Postgres).
+"""Score one movie's subtitles with Gemini and load them into Tiger Data.
 
-Setup:
-    pip install google-genai "psycopg[binary]"
-    export GEMINI_API_KEY=...   # never commit this
-    export GEMINI_MODEL=...     # a model name from Google's current docs
-    export DATABASE_URL=...     # connection string from your Tiger Data service
+Groups subtitle lines into 2-minute windows, asks Gemini for valence + six
+emotions per window (gemini_schema.json), and writes works + emotion_points
+(db/schema.sql). Based on Niki's pipeline/parsing code.py.
 
-Try a small run first:
-    python score_movie.py his_girl_friday.asr.srt --id his_girl_friday \
-        --title "His Girl Friday" --limit 60 --no-db
+Reads GEMINI_API_KEY and TIMESCALE_SERVICE_URL from .env.
+Run from the repo root, e.g.
+
+Try a small run first (no database writes):
+    python pipeline/score_movie.py data/his_girl_friday.srt --title "His Girl Friday" --limit 5 --no-db
 
 Then the full film (resumes automatically if it stops):
-    python score_movie.py his_girl_friday.asr.srt --id his_girl_friday --title "His Girl Friday"
+    python pipeline/score_movie.py data/his_girl_friday.srt --title "His Girl Friday" --year 1940 --genre Comedy
 """
 import argparse, json, os, re, sys, time
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+ROOT = Path(__file__).resolve().parent.parent
 TS = re.compile(r"(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)")
-EMOTIONS = ["joy", "humor", "love", "sadness", "fear", "anger", "tension", "neutral"]
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS movies (
-    id text PRIMARY KEY, title text NOT NULL, runtime_sec real);
-CREATE TABLE IF NOT EXISTS cues (
-    movie_id text REFERENCES movies(id), idx int, start_sec real, end_sec real,
-    text text, score real, emotion text, PRIMARY KEY (movie_id, idx));
-"""
+FIELDS = ["valence", "joy", "sadness", "fear", "anger", "tension", "surprise"]
+DEFAULT_MODEL = "gemini-3.5-flash"
 
 
-def secs(h, m, s, ms):
-    return int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
+def ms(h, m, s, frac):
+    # Fractions may have 1-3 digits ("01,95" is 950 ms, not 95 ms).
+    return (int(h) * 3600 + int(m) * 60 + int(s)) * 1000 + round(int(frac) / 10 ** len(frac) * 1000)
 
 
 def parse_srt(path):
@@ -47,130 +45,140 @@ def parse_srt(path):
         if not text:
             continue
         g = m.groups()
-        cues.append({"idx": len(cues), "start": secs(*g[:4]), "end": secs(*g[4:]), "text": text})
+        cues.append({"start": ms(*g[:4]), "end": ms(*g[4:]), "text": text})
     return cues
 
 
-def build_prompt(title, context, batch):
-    ctx = "\n".join(f"- {c['text']}" for c in context) or "(start of film)"
-    lines = "\n".join(f"{c['idx']}: {c['text']}" for c in batch)
-    return f"""You are scoring the emotional tone of subtitle lines from the film "{title}".
-Score each line from -1.0 (very negative or dark) to 1.0 (very positive or warm), judging what is
-actually being expressed in context, including sarcasm and banter. 0 means neutral.
-Pick one emotion for each line from: {", ".join(EMOTIONS)}.
-Earlier lines for context only (do NOT score these):
-{ctx}
-Lines to score (format "id: text"):
-{lines}
-Return ONLY a JSON array with exactly one object per id, like:
-[{{"i": 12, "score": -0.4, "emotion": "tension"}}]"""
+def make_windows(cues, window_ms):
+    """Group cues by window start. Windows with no dialogue are skipped."""
+    windows = {}
+    for c in cues:
+        start = c["start"] // window_ms * window_ms
+        windows.setdefault(start, []).append(c["text"])
+    return [{"idx": i, "start_ms": s, "text": " ".join(t)} for i, (s, t) in enumerate(sorted(windows.items()))]
 
 
-def score_batch(client, types, model, title, context, batch, tries=3):
-    want = {c["idx"] for c in batch}
+def build_prompt(title, batch, window_min):
+    blocks = "\n\n".join(f"[window {w['idx']}, minute {w['start_ms'] // 60000}]\n{w['text']}" for w in batch)
+    return f"""You are scoring the emotional arc of the film "{title}" from its subtitles.
+Each window below is {window_min} minutes of dialogue. The subtitles may be auto-transcribed and noisy;
+judge the overall emotional content of the scene, including sarcasm and banter.
+
+For each window return:
+- valence: -1 (very dark/negative) to 1 (very warm/positive), 0 neutral
+- joy, sadness, fear, anger, tension, surprise: each 0 (absent) to 1 (very strong), scored independently
+
+Return one object per window, echoing its number as window_idx.
+
+{blocks}"""
+
+
+def score_batch(client, types, model, schema, title, batch, window_min, tries=4):
+    want = {w["idx"] for w in batch}
     best = {}
     for t in range(tries):
         try:
             r = client.models.generate_content(
                 model=model,
-                contents=build_prompt(title, context, batch),
+                contents=build_prompt(title, batch, window_min),
                 config=types.GenerateContentConfig(
                     temperature=0,
                     response_mime_type="application/json",
+                    response_json_schema=schema,
                 ),
             )
             out = {}
-            for row in json.loads(r.text):
-                if row.get("i") in want:
-                    out[row["i"]] = {
-                        "score": max(-1.0, min(1.0, float(row["score"]))),
-                        "emotion": row.get("emotion") if row.get("emotion") in EMOTIONS else "neutral",
+            for row in json.loads(r.text)["windows"]:
+                if row.get("window_idx") in want:
+                    out[row["window_idx"]] = {
+                        f: max(-1.0 if f == "valence" else 0.0, min(1.0, float(row[f]))) for f in FIELDS
                     }
             if len(out) > len(best):
                 best = out
             if set(out) == want:
                 return out
-        except Exception as e:  # network, quota, bad JSON: wait and retry
+        except Exception as e:  # network, quota (429), bad JSON: wait and retry
             print(f"  retry {t + 1}: {e}", file=sys.stderr)
-            time.sleep(2 * (t + 1))
+            time.sleep(5 * (t + 1))
     return best
 
 
-def load_db(movie_id, title, cues):
-    import psycopg
+def load_db(title, year, genre, runtime_ms, window_ms, windows, scores):
+    import psycopg2
 
-    rows = [
-        (movie_id, c["idx"], c["start"], c["end"], c["text"], c["score"], c["emotion"])
-        for c in cues
-    ]
-    with psycopg.connect(os.environ["DATABASE_URL"]) as conn, conn.cursor() as cur:
-        cur.execute(SCHEMA)
+    rows = [(w["start_ms"], *(scores[str(w["idx"])][f] for f in FIELDS)) for w in windows if str(w["idx"]) in scores]
+    with psycopg2.connect(os.environ["TIMESCALE_SERVICE_URL"]) as conn, conn.cursor() as cur:
         cur.execute(
-            "INSERT INTO movies(id, title, runtime_sec) VALUES (%s, %s, %s) "
-            "ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, "
-            "runtime_sec = EXCLUDED.runtime_sec",
-            (movie_id, title, cues[-1]["end"]),
+            "INSERT INTO works (title, year, genre, runtime_ms) VALUES (%s, %s, %s, %s) "
+            "ON CONFLICT (title) DO UPDATE SET year = EXCLUDED.year, genre = EXCLUDED.genre, "
+            "runtime_ms = EXCLUDED.runtime_ms RETURNING work_id",
+            (title, year, genre, runtime_ms),
         )
-        cur.execute("DELETE FROM cues WHERE movie_id = %s", (movie_id,))
+        work_id = cur.fetchone()[0]
+        cur.execute("DELETE FROM emotion_points WHERE work_id = %s", (work_id,))
         cur.executemany(
-            "INSERT INTO cues(movie_id, idx, start_sec, end_sec, text, score, emotion) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            rows,
+            "INSERT INTO emotion_points (work_id, t, valence, joy, sadness, fear, anger, tension, surprise) "
+            "VALUES (%s, '1970-01-01'::timestamptz + %s * interval '1 millisecond', %s, %s, %s, %s, %s, %s, %s)",
+            [(work_id, *r) for r in rows],
         )
-    print(f"loaded {len(rows)} cues into Tiger Data")
+    print(f"loaded {title} (work_id {work_id}): {len(rows)} windows into Tiger Data")
 
 
 def main():
+    load_dotenv(ROOT / ".env")
     ap = argparse.ArgumentParser()
     ap.add_argument("srt")
-    ap.add_argument("--id", required=True, help="short slug, e.g. his_girl_friday")
     ap.add_argument("--title", required=True)
-    ap.add_argument("--out", help="scored JSON path (default <id>_scored.json)")
-    ap.add_argument("--batch", type=int, default=60)
-    ap.add_argument("--limit", type=int, default=0, help="only score the first N cues (for testing)")
+    ap.add_argument("--year", type=int)
+    ap.add_argument("--genre")
+    ap.add_argument("--window-min", type=int, default=2)
+    ap.add_argument("--batch", type=int, default=10, help="windows per Gemini request")
+    ap.add_argument("--limit", type=int, default=0, help="only score the first N windows (for testing)")
+    ap.add_argument("--out", help="scores JSON path (default pipeline/scored/<srt name>.json)")
     ap.add_argument("--no-db", action="store_true")
     a = ap.parse_args()
 
     cues = parse_srt(a.srt)
     if not cues:
         sys.exit("No cues found. Is this a valid .srt file?")
+    window_ms = a.window_min * 60000
+    runtime_ms = cues[-1]["end"]
+    windows = make_windows(cues, window_ms)
     if a.limit:
-        cues = cues[: a.limit]
-    print(f"parsed {len(cues)} cues, last one ends at ~{cues[-1]['end'] / 60:.0f} min")
+        windows = windows[: a.limit]
+    print(f"parsed {len(cues)} cues into {len(windows)} windows, film ends at ~{runtime_ms / 60000:.0f} min")
 
-    out = Path(a.out or f"{a.id}_scored.json")
-    done = json.loads(out.read_text()) if out.exists() else {}  # resume: str(idx) -> result
-    todo = [c for c in cues if str(c["idx"]) not in done]
+    out = Path(a.out or ROOT / "pipeline" / "scored" / f"{Path(a.srt).stem}.json")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    done = json.loads(out.read_text()) if out.exists() else {}  # resume: str(idx) -> scores
+    todo = [w for w in windows if str(w["idx"]) not in done]
 
     if todo:
         from google import genai
         from google.genai import types
 
-        model = os.environ.get("GEMINI_MODEL") or sys.exit("Set GEMINI_MODEL (see Google's docs)")
+        schema = json.loads((ROOT / "gemini_schema.json").read_text())
+        model = os.environ.get("GEMINI_MODEL") or DEFAULT_MODEL
         client = genai.Client()  # reads GEMINI_API_KEY
-        for s in range(0, len(cues), a.batch):
-            batch = cues[s : s + a.batch]
-            if all(str(c["idx"]) in done for c in batch):
-                continue
-            res = score_batch(client, types, model, a.title, cues[max(0, s - 3) : s], batch)
-            for c in batch:
-                done[str(c["idx"])] = res.get(c["idx"], {"score": 0.0, "emotion": "unscored"})
-            out.write_text(json.dumps(done))  # save after every batch
-            print(f"  scored {min(s + a.batch, len(cues))}/{len(cues)}")
-            time.sleep(1)
+        for s in range(0, len(todo), a.batch):
+            batch = todo[s : s + a.batch]
+            res = score_batch(client, types, model, schema, a.title, batch, a.window_min)
+            for idx, sc in res.items():
+                done[str(idx)] = sc
+            out.write_text(json.dumps(done, indent=1))  # save after every batch
+            print(f"  scored {len(res)}/{len(batch)} windows in batch, {len(done)}/{len(windows)} total")
+            time.sleep(2)
 
-    for c in cues:
-        r = done[str(c["idx"])]
-        c["score"], c["emotion"] = r["score"], r["emotion"]
-
-    missing = sum(c["emotion"] == "unscored" for c in cues)
+    missing = [w["idx"] for w in windows if str(w["idx"]) not in done]
     if missing:
-        print(f"warning: {missing} cues could not be scored (stored as 0.0, 'unscored')")
-    avg = sum(c["score"] for c in cues) / len(cues)
-    print(f"average score {avg:+.2f}; saved to {out}")
+        print(f"warning: {len(missing)} windows not scored yet; run again to retry them")
+    scored = [done[str(w["idx"])] for w in windows if str(w["idx"]) in done]
+    if scored:
+        print("averages: " + ", ".join(f"{f} {sum(s[f] for s in scored) / len(scored):+.2f}" for f in FIELDS))
+    print(f"saved to {out}")
 
     if not a.no_db:
-        load_db(a.id, a.title, cues)
+        load_db(a.title, a.year, a.genre, runtime_ms, window_ms, windows, done)
 
 
 if __name__ == "__main__":
