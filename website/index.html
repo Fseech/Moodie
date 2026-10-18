@@ -6,7 +6,7 @@
 <title>Moodie</title>
 <style>
 :root{--bg:#f4f4f6;--surface:#fff;--surface2:#ececf0;--text:#16161a;--muted:#65656f;--accent:#e50914;--line:#d8d8de;
---joy:#f5b301;--sadness:#3b82f6;--fear:#8b5cf6;--anger:#ef4444;--tension:#f97316;--surprise:#14b8a6;
+--joy:#f5b301;--sadness:#3b82f6;--fear:#8b5cf6;--anger:#ef4444;--surprise:#14b8a6;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0d10;--surface:#18181d;--surface2:#24242b;--text:#f3f3f5;--muted:#9a9aa6;--line:#2f2f38;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#0d0d10;--surface:#18181d;--surface2:#24242b;--text:#f3f3f5;--muted:#9a9aa6;--line:#2f2f38;color-scheme:dark}
@@ -39,6 +39,12 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;display:flex;a
 .card{background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--line);transition:transform .2s,box-shadow .2s}
 .card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.25)}
 .poster{height:130px;padding:14px;display:flex;flex-direction:column;justify-content:flex-end;color:#fff;position:relative}
+.poster.with-poster{height:220px;display:grid;grid-template-columns:minmax(105px,145px) minmax(0,1fr);padding:0}
+.poster-art-link{display:block;height:100%;overflow:hidden;background:#1a1a22}
+.poster-art{display:block;width:100%;height:100%;object-fit:cover;object-position:center top}
+.poster-copy{display:flex;min-width:0;flex-direction:column;justify-content:flex-end;padding:14px}
+.poster-source{margin-top:5px;color:rgba(255,255,255,.82);font-size:11px;text-decoration:underline;text-underline-offset:2px}
+.poster-source:hover{color:#fff}
 .poster h3{margin:0;font-size:20px;letter-spacing:-.3px;text-shadow:0 2px 8px rgba(0,0,0,.5)}
 .poster small{opacity:.9;text-shadow:0 1px 4px rgba(0,0,0,.5)}
 .badge{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.45);padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600}
@@ -58,7 +64,8 @@ svg{width:100%;height:auto;display:block;touch-action:none}
 .read{font-size:12px;color:var(--muted);min-height:18px;margin-top:4px}
 .empty{padding:40px 4vw;color:var(--muted)}
 footer{padding:20px 4vw 40px;color:var(--muted);font-size:12px}
-@media(max-width:600px){.hero{padding:12vw 5vw 8vw}.search-controls{flex-direction:column;gap:10px;margin-top:22px}.emotion-filter{width:100%}.chips{justify-content:flex-start}}
+@media(max-width:600px){.hero{padding:12vw 5vw 8vw}.search-controls{flex-direction:column;gap:10px;margin-top:22px}.emotion-filter{width:100%}.chips{justify-content:center;flex-wrap:wrap;overflow-x:visible}}
+@media(max-width:380px){.poster.with-poster{grid-template-columns:112px minmax(0,1fr)}.poster-copy{padding:12px}.poster h3{font-size:18px}}
 </style>
 </head>
 <body>
@@ -79,7 +86,7 @@ footer{padding:20px 4vw 40px;color:var(--muted);font-size:12px}
 <footer>Emotion values and mood charts are scored from each film’s subtitles and loaded from the Moodie database.</footer>
 
 <script>
-const EM=[["joy","Joy"],["sadness","Sadness"],["fear","Fear"],["anger","Anger"],["tension","Tension"],["surprise","Surprise"]];
+const EM=[["joy","Joy"],["sadness","Sadness"],["fear","Fear"],["anger","Anger"],["surprise","Surprise"]];
 const COL=Object.fromEntries(EM.map(([k])=>[k,getComputedStyle(document.documentElement).getPropertyValue("--"+k).trim()]));
 const $=s=>document.querySelector(s);
 $("#legend").innerHTML=EM.map(([k,l])=>`<span><i class="dot" style="background:${COL[k]}"></i>${l}</span>`).join("");
@@ -102,7 +109,7 @@ async function loadFilms(){
    const w=Object.fromEntries(EM.map(([key])=>[key,Number(row.emotions[key])]));
    const total=Object.values(w).reduce((sum,value)=>sum+value,0);
    const pct=Object.fromEntries(EM.map(([key])=>[key,total?w[key]/total*100:0]));
-   return {id:row.id,t:row.title,y:row.year,m:row.runtime_min,g:row.genre||"Unknown genre",w,pct,top:EM.map(([key])=>key).sort((a,b)=>pct[b]-pct[a])[0],pts:null,pointsRequest:null};
+   return {id:row.id,t:row.title,y:row.year,m:row.runtime_min,g:row.genre||"Unknown genre",w,pct,top:EM.map(([key])=>key).sort((a,b)=>pct[b]-pct[a])[0],poster:row.poster,pts:null,pointsRequest:null};
   });
   filmsLoaded=true;
   render();
@@ -176,11 +183,15 @@ function render(){
  list.forEach(f=>{
   const c=document.createElement("article");c.className="card";c._on=new Set(EM.map(e=>e[0]));
   const sorted=EM.slice().sort((a,b)=>f.pct[b[0]]-f.pct[a[0]]);
-  c.innerHTML=`<div class="poster" style="background:linear-gradient(160deg,${COL[f.top]},#1a1a22 85%)"><span class="badge">Mostly ${f.top}</span><h3>${escapeHTML(f.t)}</h3><small>${escapeHTML(f.y??"Year unknown")} · ${escapeHTML(f.g)} · ${Math.floor(f.m/60)}h ${f.m%60}m</small></div>
+  const posterStyle=`background:linear-gradient(160deg,${COL[f.top]},#1a1a22 85%)`;
+  const posterHeader=f.poster?`<div class="poster with-poster" style="${posterStyle}"><a class="poster-art-link" href="${escapeHTML(f.poster.source_url)}" target="_blank" rel="noopener noreferrer" aria-label="View poster source for ${escapeHTML(f.t)}"><img class="poster-art" src="${escapeHTML(f.poster.url)}" alt="Poster for ${escapeHTML(f.t)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></a><div class="poster-copy"><span class="badge">Mostly ${f.top}</span><h3>${escapeHTML(f.t)}</h3><small>${escapeHTML(f.y??"Year unknown")} · ${escapeHTML(f.g)} · ${Math.floor(f.m/60)}h ${f.m%60}m</small><a class="poster-source" href="${escapeHTML(f.poster.source_url)}" target="_blank" rel="noopener noreferrer">Poster: ${escapeHTML(f.poster.source_name)}</a></div></div>`:`<div class="poster" style="${posterStyle}"><span class="badge">Mostly ${f.top}</span><h3>${escapeHTML(f.t)}</h3><small>${escapeHTML(f.y??"Year unknown")} · ${escapeHTML(f.g)} · ${Math.floor(f.m/60)}h ${f.m%60}m</small></div>`;
+  c.innerHTML=`${posterHeader}
   <div class="body"><div class="stack">${sorted.map(([k])=>`<div style="width:${f.pct[k]}%;background:${COL[k]}"></div>`).join("")}</div>
   <div class="rows">${EM.map(([k,l])=>`<div class="row"><i class="dot" style="background:${COL[k]};margin:0"></i>${l}<b>${Math.round(f.pct[k])}%</b></div>`).join("")}</div>
   <div class="btns"><button class="btn" aria-expanded="false">Show emotion graph</button><button class="btn btn2" aria-expanded="false">Show moodline</button></div>
   <div class="graph"><div class="tog">${EM.map(([k,l])=>`<button class="on" style="--c:${COL[k]}" data-k="${k}">${l}</button>`).join("")}</div><svg role="img" aria-label="Emotions over time for ${escapeHTML(f.t)}"></svg><div class="read">Hover the graph to read values</div></div><div class="graph2"><svg class="vs" role="img" aria-label="Moodline, warm versus dark, over time for ${escapeHTML(f.t)}"></svg><div class="read read2">Hover to see sentiment</div></div></div>`;
+  const posterImage=c.querySelector(".poster-art");
+  if(posterImage)posterImage.onerror=()=>{c.querySelector(".poster.with-poster").classList.remove("with-poster");posterImage.closest(".poster-art-link").remove();c.querySelector(".poster-copy").classList.remove("poster-copy");c.querySelector(".poster-source").remove()};
   const btn=c.querySelector(".btn");
   btn.onclick=async()=>{const o=c.classList.toggle("open");btn.textContent=o?"Hide emotion graph":"Show emotion graph";btn.setAttribute("aria-expanded",o);if(o){const read=c.querySelector(".read");read.textContent="Loading emotion data…";try{await loadPoints(f);if(c.isConnected&&c.classList.contains("open")){chart(f,c);read.textContent="Hover the graph to read values"}}catch(error){console.error(`Could not load emotion data for movie ${f.id}:`,error);read.textContent="Could not load this movie’s emotion data. Try again."}}};
   c.querySelector(".tog").onclick=e=>{const b=e.target.closest("button");if(!b)return;const k=b.dataset.k;c._on.has(k)?c._on.delete(k):c._on.add(k);b.classList.toggle("on");chart(f,c)};

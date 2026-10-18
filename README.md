@@ -24,17 +24,37 @@ Open <http://127.0.0.1:8000>. The database must have the schema from
 If no films have been scored yet, the page shows an empty state. Scoring runs
 separately through the Gemini pipeline and may use API quota.
 
+Movie poster URLs and source credits are configured in `website/posters.json`.
+Only add artwork that is public domain, openly licensed, or otherwise cleared
+for use, and include its source URL and credit. Restart the website server after
+changing this file. Movies without a configured or loadable poster keep the
+existing gradient card header.
+
 From the `Swamphacks` directory, run the commands for the films you want to
 score and load into Tiger Data:
 
 ```powershell
 py -3 "pipeline\parsing code.py" "data\his_girl_friday.srt" --title "His Girl Friday" --year 1940 --genre Comedy
-py -3 "pipeline\parsing code.py" "data\Midnight_Manhunt.asr.srt" --title "Midnight Manhunt"
-py -3 "pipeline\parsing code.py" "data\OutpostInMorocco.asr.srt" --title "Outpost in Morocco"
+py -3 "pipeline\parsing code.py" "data\Midnight_Manhunt.asr.srt" --title "Midnight Manhunt" --year 1945 --genre Mystery
+py -3 "pipeline\parsing code.py" "data\OutpostInMorocco.asr.srt" --title "Outpost in Morocco" --year 1949 --genre "Action / Adventure"
+py -3 "pipeline\parsing code.py" "data\little_princess.asr.srt" --title "The Little Princess" --year 1939 --genre Drama
+py -3 "pipeline\parsing code.py" "data\royal_wedding.asr.srt" --title "Royal Wedding" --year 1951 --genre "Musical Comedy"
+py -3 "pipeline\parsing code.py" "data\Avengers Endgame 2019 NEW 720p HDCAM x264-iMaX.srt" --title "Avengers: Endgame" --year 2019 --genre "Action / Science Fiction"
+py -3 "pipeline\parsing code.py" "data\Fight.Club.1999.1080p.BluRay.x264.srt" --title "Fight Club" --year 1999 --genre "Drama / Thriller"
+py -3 "pipeline\parsing code.py" "data\Forrest Gump ;[1994];[1080p BDremux];[Shadowl0rd].ENG.srt" --title "Forrest Gump" --year 1994 --genre "Drama / Romance"
+py -3 "pipeline\parsing code.py" "data\Inside.Out.2.2024.1080p.WEB-DL.DDP5.1.Atmos.H.srt" --title "Inside Out 2" --year 2024 --genre "Animation / Comedy"
+py -3 "pipeline\parsing code.py" "data\Interstellar.2014.720p.BluRay.x264-DAA.srt" --title "Interstellar" --year 2014 --genre "Science Fiction / Drama"
 ```
 
 These commands send subtitle text to Gemini and use API quota. Refresh the
 website after a scoring command finishes to see the movie and its scores.
+Existing databases need the one-time schema migration in
+`db/migrate_remove_tension.sql` before scoring against the updated schema.
+
+The latest scoring run hit Gemini's free-tier daily request limit (HTTP 429).
+Completed windows are cached locally; rerun an affected command after quota
+resets to resume it. The five newer titles are not in the database until their
+scoring commands complete.
 
 What it does
 Emotional arcs: turns a movie's subtitles into a minute-by-minute mood curve.

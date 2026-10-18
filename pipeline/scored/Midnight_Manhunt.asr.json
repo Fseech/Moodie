@@ -5,7 +5,6 @@
   "sadness": 0.0,
   "fear": 0.0,
   "anger": 0.0,
-  "tension": 0.0,
   "surprise": 0.0
  },
  "1": {
@@ -14,7 +13,6 @@
   "sadness": 0.0,
   "fear": 0.0,
   "anger": 0.0,
-  "tension": 0.0,
   "surprise": 0.0
  },
  "2": {
@@ -23,7 +21,6 @@
   "sadness": 0.1,
   "fear": 0.0,
   "anger": 0.1,
-  "tension": 0.2,
   "surprise": 0.1
  },
  "3": {
@@ -32,7 +29,6 @@
   "sadness": 0.1,
   "fear": 0.0,
   "anger": 0.1,
-  "tension": 0.2,
   "surprise": 0.1
  },
  "4": {
@@ -41,7 +37,6 @@
   "sadness": 0.1,
   "fear": 0.1,
   "anger": 0.3,
-  "tension": 0.3,
   "surprise": 0.1
  },
  "5": {
@@ -50,7 +45,6 @@
   "sadness": 0.1,
   "fear": 0.1,
   "anger": 0.2,
-  "tension": 0.3,
   "surprise": 0.1
  },
  "6": {
@@ -59,7 +53,6 @@
   "sadness": 0.0,
   "fear": 0.0,
   "anger": 0.0,
-  "tension": 0.1,
   "surprise": 0.0
  },
  "7": {
@@ -68,7 +61,6 @@
   "sadness": 0.1,
   "fear": 0.1,
   "anger": 0.1,
-  "tension": 0.3,
   "surprise": 0.2
  },
  "8": {
@@ -77,7 +69,6 @@
   "sadness": 0.1,
   "fear": 0.1,
   "anger": 0.2,
-  "tension": 0.3,
   "surprise": 0.1
  },
  "9": {
@@ -86,7 +77,6 @@
   "sadness": 0.1,
   "fear": 0.3,
   "anger": 0.2,
-  "tension": 0.5,
   "surprise": 0.3
  },
  "10": {
@@ -95,7 +85,6 @@
   "sadness": 0.1,
   "fear": 0.2,
   "anger": 0.3,
-  "tension": 0.5,
   "surprise": 0.2
  },
  "11": {
@@ -104,7 +93,6 @@
   "sadness": 0.1,
   "fear": 0.2,
   "anger": 0.1,
-  "tension": 0.4,
   "surprise": 0.1
  },
  "12": {
@@ -113,7 +101,6 @@
   "sadness": 0.1,
   "fear": 0.5,
   "anger": 0.3,
-  "tension": 0.7,
   "surprise": 0.3
  },
  "13": {
@@ -122,7 +109,6 @@
   "sadness": 0.1,
   "fear": 0.2,
   "anger": 0.2,
-  "tension": 0.5,
   "surprise": 0.1
  },
  "14": {
@@ -131,7 +117,6 @@
   "sadness": 0.1,
   "fear": 0.4,
   "anger": 0.3,
-  "tension": 0.7,
   "surprise": 0.2
  },
  "15": {
@@ -140,7 +125,6 @@
   "sadness": 0.1,
   "fear": 0.2,
   "anger": 0.4,
-  "tension": 0.5,
   "surprise": 0.2
  },
  "16": {
@@ -149,7 +133,6 @@
   "sadness": 0.1,
   "fear": 0.2,
   "anger": 0.3,
-  "tension": 0.5,
   "surprise": 0.3
  },
  "17": {
@@ -158,7 +141,6 @@
   "sadness": 0.1,
   "fear": 0.4,
   "anger": 0.4,
-  "tension": 0.7,
   "surprise": 0.3
  },
  "18": {
@@ -167,7 +149,6 @@
   "sadness": 0.1,
   "fear": 0.4,
   "anger": 0.3,
-  "tension": 0.7,
   "surprise": 0.3
  },
  "19": {
@@ -176,7 +157,6 @@
   "sadness": 0.1,
   "fear": 0.3,
   "anger": 0.4,
-  "tension": 0.6,
   "surprise": 0.4
  },
  "20": {
@@ -185,7 +165,6 @@
   "sadness": 0.1,
   "fear": 0.3,
   "anger": 0.2,
-  "tension": 0.5,
   "surprise": 0.2
  },
  "21": {
@@ -194,7 +173,6 @@
   "sadness": 0.1,
   "fear": 0.2,
   "anger": 0.2,
-  "tension": 0.5,
   "surprise": 0.2
  },
  "22": {
@@ -203,7 +181,6 @@
   "sadness": 0.1,
   "fear": 0.3,
   "anger": 0.3,
-  "tension": 0.6,
   "surprise": 0.2
  },
  "23": {
@@ -212,7 +189,6 @@
   "sadness": 0.2,
   "fear": 0.3,
   "anger": 0.4,
-  "tension": 0.6,
   "surprise": 0.2
  },
  "24": {
@@ -221,7 +197,6 @@
   "sadness": 0.1,
   "fear": 0.2,
   "anger": 0.5,
-  "tension": 0.5,
   "surprise": 0.2
  },
  "25": {
@@ -230,7 +205,6 @@
   "sadness": 0.1,
   "fear": 0.4,
   "anger": 0.2,
-  "tension": 0.7,
   "surprise": 0.3
  },
  "26": {
@@ -239,7 +213,6 @@
   "sadness": 0.0,
   "fear": 0.3,
   "anger": 0.2,
-  "tension": 0.6,
   "surprise": 0.2
  },
  "27": {
@@ -248,7 +221,6 @@
   "sadness": 0.1,
   "fear": 0.4,
   "anger": 0.3,
-  "tension": 0.7,
   "surprise": 0.3
  },
  "28": {
@@ -257,7 +229,6 @@
   "sadness": 0.1,
   "fear": 0.6,
   "anger": 0.5,
-  "tension": 0.8,
   "surprise": 0.4
  },
  "29": {
@@ -266,7 +237,6 @@
   "sadness": 0.1,
   "fear": 0.5,
   "anger": 0.5,
-  "tension": 0.8,
   "surprise": 0.6
  },
  "30": {
@@ -275,7 +245,6 @@
   "sadness": 0.1,
   "fear": 0.2,
   "anger": 0.2,
-  "tension": 0.4,
   "surprise": 0.1
  },
  "31": {
@@ -284,7 +253,6 @@
   "sadness": 0.0,
   "fear": 0.1,
   "anger": 0.1,
-  "tension": 0.2,
   "surprise": 0.0
  }
 }

@@ -2,7 +2,7 @@
 """Score one movie's subtitles with Gemini and load them into Tiger Data.
 
 Groups subtitle lines into 2-minute windows, asks Gemini for valence + six
-emotions per window (gemini_schema.json), and writes works + emotion_points
+five emotions per window (gemini_schema.json), and writes works + emotion_points
 (db/schema.sql). Based on Niki's pipeline/parsing code.py.
 
 Reads GEMINI_API_KEY and TIMESCALE_SERVICE_URL from .env.
@@ -11,7 +11,7 @@ Run from the repo root, e.g.
 Try a small run first (no database writes):
     python pipeline/score_movie.py data/his_girl_friday.srt --title "His Girl Friday" --limit 5 --no-db
 
-Then the full film (resumes automatically if it stops):
+Then the full film (year and genre are required; resumes automatically if it stops):
     python pipeline/score_movie.py data/his_girl_friday.srt --title "His Girl Friday" --year 1940 --genre Comedy
 """
 import argparse, json, os, re, sys, time
@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent.parent
 TS = re.compile(r"(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)")
-FIELDS = ["valence", "joy", "sadness", "fear", "anger", "tension", "surprise"]
+FIELDS = ["valence", "joy", "sadness", "fear", "anger", "surprise"]
 DEFAULT_MODEL = "gemini-3.5-flash"
 
 
@@ -66,7 +66,7 @@ judge the overall emotional content of the scene, including sarcasm and banter.
 
 For each window return:
 - valence: -1 (very dark/negative) to 1 (very warm/positive), 0 neutral
-- joy, sadness, fear, anger, tension, surprise: each 0 (absent) to 1 (very strong), scored independently
+- joy, sadness, fear, anger, surprise: each 0 (absent) to 1 (very strong), scored independently
 
 Return one object per window, echoing its number as window_idx.
 
@@ -117,8 +117,8 @@ def load_db(title, year, genre, runtime_ms, window_ms, windows, scores):
         work_id = cur.fetchone()[0]
         cur.execute("DELETE FROM emotion_points WHERE work_id = %s", (work_id,))
         cur.executemany(
-            "INSERT INTO emotion_points (work_id, t, valence, joy, sadness, fear, anger, tension, surprise) "
-            "VALUES (%s, '1970-01-01'::timestamptz + %s * interval '1 millisecond', %s, %s, %s, %s, %s, %s, %s)",
+            "INSERT INTO emotion_points (work_id, t, valence, joy, sadness, fear, anger, surprise) "
+            "VALUES (%s, '1970-01-01'::timestamptz + %s * interval '1 millisecond', %s, %s, %s, %s, %s, %s)",
             [(work_id, *r) for r in rows],
         )
     print(f"loaded {title} (work_id {work_id}): {len(rows)} windows into Tiger Data")
@@ -129,8 +129,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("srt")
     ap.add_argument("--title", required=True)
-    ap.add_argument("--year", type=int)
-    ap.add_argument("--genre")
+    ap.add_argument("--year", type=int, required=True)
+    ap.add_argument("--genre", required=True)
     ap.add_argument("--window-min", type=int, default=2)
     ap.add_argument("--batch", type=int, default=10, help="windows per Gemini request")
     ap.add_argument("--limit", type=int, default=0, help="only score the first N windows (for testing)")

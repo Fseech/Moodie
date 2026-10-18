@@ -17,8 +17,31 @@ from psycopg2.extras import RealDictCursor
 
 ROOT = Path(__file__).resolve().parent.parent
 INDEX = ROOT / "website" / "index.html"
-EMOTIONS = ("joy", "sadness", "fear", "anger", "tension", "surprise")
+POSTERS_PATH = ROOT / "website" / "posters.json"
+EMOTIONS = ("joy", "sadness", "fear", "anger", "surprise")
 load_dotenv(ROOT / ".env")
+
+
+def load_posters():
+    posters = json.loads(POSTERS_PATH.read_text(encoding="utf-8"))
+    if not isinstance(posters, dict):
+        raise ValueError("website/posters.json must contain a movie-to-poster object.")
+
+    for title, poster in posters.items():
+        if not isinstance(poster, dict):
+            raise ValueError(f"Poster metadata for {title!r} must be an object.")
+        for key in ("url", "source_url", "source_name"):
+            if not isinstance(poster.get(key), str) or not poster[key].strip():
+                raise ValueError(f"Poster metadata for {title!r} requires {key}.")
+        for key in ("url", "source_url"):
+            parsed = urlsplit(poster[key])
+            if parsed.scheme != "https" or not parsed.netloc:
+                raise ValueError(f"Poster {key} for {title!r} must be an HTTPS URL.")
+
+    return posters
+
+
+POSTERS = load_posters()
 
 
 def query_database(sql, params=()):
@@ -83,7 +106,6 @@ class MoodieHandler(BaseHTTPRequestHandler):
                    AVG(p.sadness)::double precision AS sadness,
                    AVG(p.fear)::double precision AS fear,
                    AVG(p.anger)::double precision AS anger,
-                   AVG(p.tension)::double precision AS tension,
                    AVG(p.surprise)::double precision AS surprise
             FROM works AS w
             JOIN emotion_points AS p USING (work_id)
@@ -101,6 +123,7 @@ class MoodieHandler(BaseHTTPRequestHandler):
                     "genre": row["genre"],
                     "runtime_min": row["runtime_min"],
                     "emotions": {key: row[key] for key in EMOTIONS},
+                    "poster": POSTERS.get(row["title"]),
                 }
             )
         self.send_json(200, films)
@@ -109,7 +132,7 @@ class MoodieHandler(BaseHTTPRequestHandler):
         rows = query_database(
             """
             SELECT (EXTRACT(EPOCH FROM t) / 60.0)::double precision AS minute,
-                   joy, sadness, fear, anger, tension, surprise, valence
+                   joy, sadness, fear, anger, surprise, valence
             FROM emotion_points
             WHERE work_id = %s
             ORDER BY t

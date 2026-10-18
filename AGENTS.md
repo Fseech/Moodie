@@ -56,7 +56,7 @@ The live app **never calls Gemini**. All scoring happens ahead of time. This kee
 ├── .vscode/settings.json ← shared git auto-fetch settings
 ├── test_gemini.py        ← one-shot check that the Gemini key works
 ├── gemini_schema.json    ← Gemini structured-output schema
-├── data/                 ← public-domain .srt files, one per movie (his_girl_friday.srt, OutpostInMorocco.asr.srt so far)
+├── data/                 ← subtitle inputs; check rights before adding non-public-domain files
 ├── db/
 │   ├── schema.sql        ← DDL (source of truth)
 │   ├── run_schema.py     ← applies schema.sql using TIMESCALE_SERVICE_URL
@@ -74,16 +74,17 @@ Ownership: each teammate owns one folder (website, pipeline, db, data) to avoid 
 **Exists:**
 - `website/index.html` — full UI (cards, search, filter chips, emotion graph, moodline) loaded from the local server API. No fake film data remains.
 - `website/server.py` — serves the page and read-only film/arc endpoints backed by Tiger Data. Run with `py -3 website\server.py`; open `http://127.0.0.1:8000`.
-- `db/schema.sql` — trimmed to exactly what the website displays (Section 6). The **old, larger schema was probably already applied** to Tiger Data via `run_schema.py`; if so, run `db/drop_old_schema.sql` once, then `run_schema.py`.
-- `gemini_schema.json` — matches the `emotion_points` columns.
+- `db/schema.sql` — trimmed to exactly what the website displays (Section 6); year and genre are required.
+- `db/migrate_remove_tension.sql` — applied to the existing Tiger Data database; its `emotion_points` table now has no tension column.
+- `gemini_schema.json` — matches the five emotion columns in `emotion_points`.
 - `data/his_girl_friday.srt` — first movie. Its timestamps use 2-digit fractions (`00:01:01,95`), and the text looks auto-transcribed (noisy). The parser must accept 1–3 fraction digits.
 - `.gitignore`, `.env.example`, `test_gemini.py`.
 - Python must be installed locally (3.9+) with `pip install google-genai python-dotenv psycopg2-binary`. Don't commit `venv/`.
-- The configured Tiger Data database currently has zero films or emotion points. Run the scoring pipeline to populate it; the website will show an empty state until then.
+- The configured Tiger Data database currently has five films and 170 emotion rows. The Little Princess has 40/45 scored windows and Royal Wedding has 10/46; the other three films are complete. A scoring attempt reached Gemini's free-tier daily quota (HTTP 429), so these two jobs and five additional user-authorized titles remain to be resumed after quota is available.
 
 **Security:** `.env` with the Tiger Data password was committed and pushed. It is now untracked, but it's still in git history, so **the Tiger Data password must be reset** in the Tiger Cloud console and everyone's local `.env` updated.
 
-**Not started:** scoring the available subtitle files and adding more films to the sample library.
+**Pending:** resume the partial Little Princess and Royal Wedding jobs, then score the five additional user-authorized titles after Gemini quota is available.
 
 ---
 
@@ -95,8 +96,8 @@ Taken from `website/index.html`. Store only this.
 |---|---|
 | Card header | title, year, genre, runtime |
 | Search box | title, genre |
-| Card emotion bar, % rows, "Mostly X" badge, "Most X" chips | per-film average of joy, sadness, fear, anger, tension, surprise (page converts to %) |
-| Emotion graph | per window: minute + the six emotions (0–1) |
+| Card emotion bar, % rows, "Mostly X" badge, "Most X" chips | per-film average of joy, sadness, fear, anger, surprise (page converts to %) |
+| Emotion graph | per window: minute + the five emotions (0–1) |
 | Moodline | per window: minute + valence (−1 dark … 1 warm) |
 
 Not used by the website, so **not stored**: arousal, summaries, posters, subtitle cues, per-character arcs, job status, model/provenance columns, continuous aggregates, compression.
@@ -108,20 +109,20 @@ The film-list API returns:
 Film list
 ```json
 [{ "id": 1, "title": "His Girl Friday", "year": 1940, "genre": "Comedy", "runtime_min": 92,
-   "emotions": { "joy": 0.41, "sadness": 0.12, "fear": 0.08, "anger": 0.22, "tension": 0.35, "surprise": 0.18 } }]
+   "emotions": { "joy": 0.41, "sadness": 0.12, "fear": 0.08, "anger": 0.22, "surprise": 0.18 } }]
 ```
 
 `GET /api/films/{id}/points` returns one film's arc:
 ```json
-[{ "minute": 0, "joy": 0.1, "sadness": 0.2, "fear": 0.5, "anger": 0.1, "tension": 0.6, "surprise": 0.2, "valence": -0.2 }]
+[{ "minute": 0, "joy": 0.1, "sadness": 0.2, "fear": 0.5, "anger": 0.1, "surprise": 0.2, "valence": -0.2 }]
 ```
 Silent windows (no dialogue) are omitted; the chart connects across the gap. The page computes graph x-coordinates as `minute / runtime_min` and fetches arc points on demand.
 
 ### 6.2 Gemini output (`gemini_schema.json`)
-Batch request; response `{ "windows": [ { window_idx, valence, joy, sadness, fear, anger, tension, surprise } ] }`. `valence` −1…1, the rest 0…1, all required. Pass via `response_mime_type="application/json"` + `response_schema`.
+Batch request; response `{ "windows": [ { window_idx, valence, joy, sadness, fear, anger, surprise } ] }`. `valence` −1…1, the rest 0…1, all required. Pass via `response_mime_type="application/json"` + `response_schema`.
 
 ### 6.3 Database
-Two tables — `works (work_id, title UNIQUE, year, genre, runtime_ms)` and the hypertable `emotion_points (work_id, t, valence, joy, sadness, fear, anger, tension, surprise)`. Full DDL in `db/schema.sql`; queries and insert statements in `SCHEMA.md`.
+Two tables — `works (work_id, title UNIQUE, year, genre, runtime_ms)` and the hypertable `emotion_points (work_id, t, valence, joy, sadness, fear, anger, surprise)`. Full DDL in `db/schema.sql`; queries and insert statements in `SCHEMA.md`.
 
 Film time is stored as `'1970-01-01'::timestamptz + window start` so hypertable time functions work; `extract(epoch FROM t) / 60` gives minutes into the movie.
 
@@ -132,13 +133,13 @@ Film time is stored as `'1970-01-01'::timestamptz + window start` so hypertable 
 Get **one movie working end to end** before doing anything else.
 
 1. Reset the Tiger Data password (Section 5). Update `.env`.
-2. Apply the schema: `psql "$TIMESCALE_SERVICE_URL" -f db/drop_old_schema.sql` (only if the old schema exists), then `python db/run_schema.py`. Confirm both tables exist.
+2. For a fresh database, apply `db/schema.sql` with `python db/run_schema.py`. For the existing database, confirm every film has a year and genre, then apply `db/migrate_remove_tension.sql`; do not drop stored data to migrate it.
 3. `pipeline/`: parse `data/his_girl_friday.srt` → cues → 2-minute windows (skip windows with no dialogue).
 4. Score windows with Gemini using `gemini_schema.json`, a few windows per request. Short delay between calls; retry on HTTP 429 (`RESOURCE_EXHAUSTED`). Skip films whose title is already in `works`.
 5. Insert into `works` and `emotion_points` (SQL in `SCHEMA.md`). Check the arc query looks sensible.
 6. Start the local website with `py -3 website\server.py`; the server reads the DB connection string from root `.env` and exposes read-only queries.
 7. Score at least one movie into Tiger Data, then verify its card, emotion graph, and moodline on the website.
-8. Add 6–10 public-domain films to `data/` and score them.
+8. Add 6–10 public-domain films to `data/` and score them. Only process other subtitle files when their use is authorized.
 
 ---
 

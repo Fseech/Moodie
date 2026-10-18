@@ -13,8 +13,8 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE TABLE works (
     work_id     BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title       TEXT     NOT NULL UNIQUE,              -- UNIQUE so the pipeline can skip films already scored
-    year        SMALLINT,
-    genre       TEXT,
+    year        SMALLINT NOT NULL,
+    genre       TEXT     NOT NULL,
     runtime_ms  BIGINT   NOT NULL
 );
 
@@ -30,7 +30,6 @@ CREATE TABLE emotion_points (
     sadness   REAL NOT NULL,
     fear      REAL NOT NULL,
     anger     REAL NOT NULL,
-    tension   REAL NOT NULL,
     surprise  REAL NOT NULL,
     PRIMARY KEY (work_id, t)
 );
@@ -41,17 +40,17 @@ SELECT create_hypertable('emotion_points', 't', chunk_time_interval => INTERVAL 
 -- Queries the website runs (server-side; never put the DB URL in browser JS)
 -- ---------------------------------------------------------------
 
--- Film cards: header + average emotions. The page turns the six averages into percentages.
+-- Film cards: header + average emotions. The page turns the five averages into percentages.
 -- SELECT w.work_id, w.title, w.year, w.genre, round(w.runtime_ms / 60000.0) AS runtime_min,
 --        avg(p.joy) AS joy, avg(p.sadness) AS sadness, avg(p.fear) AS fear,
---        avg(p.anger) AS anger, avg(p.tension) AS tension, avg(p.surprise) AS surprise
+--        avg(p.anger) AS anger, avg(p.surprise) AS surprise
 -- FROM works w JOIN emotion_points p USING (work_id)
 -- GROUP BY w.work_id
 -- ORDER BY w.title;
 
 -- One film's arc (emotion graph + moodline):
 -- SELECT extract(epoch FROM t) / 60 AS minute,
---        joy, sadness, fear, anger, tension, surprise, valence
+--        joy, sadness, fear, anger, surprise, valence
 -- FROM emotion_points
 -- WHERE work_id = $1
 -- ORDER BY t;

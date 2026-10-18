@@ -21,7 +21,7 @@ The schema stores only what [`website/index.html`](./website/index.html) display
 |---|---|---|---|
 | `work_id` | bigint PK, FK → works | | |
 | `t` | timestamptz PK | | chart x-axis (minutes into the film) |
-| `joy` `sadness` `fear` `anger` `tension` `surprise` | real | 0 … 1 | emotion graph lines; averaged for the card's % breakdown, "Mostly X" badge and "Most X" filter chips |
+| `joy` `sadness` `fear` `anger` `surprise` | real | 0 … 1 | emotion graph lines; averaged for the card's % breakdown, "Mostly X" badge and "Most X" filter chips |
 | `valence` | real | −1 … 1 | moodline (dark ↔ warm) |
 
 Windows with no dialogue are not stored; the chart connects across the gap.
@@ -41,7 +41,7 @@ Film cards (`works` + average emotions):
 ```sql
 SELECT w.work_id, w.title, w.year, w.genre, round(w.runtime_ms / 60000.0) AS runtime_min,
        avg(p.joy) AS joy, avg(p.sadness) AS sadness, avg(p.fear) AS fear,
-       avg(p.anger) AS anger, avg(p.tension) AS tension, avg(p.surprise) AS surprise
+       avg(p.anger) AS anger, avg(p.surprise) AS surprise
 FROM works w JOIN emotion_points p USING (work_id)
 GROUP BY w.work_id
 ORDER BY w.title;
@@ -51,7 +51,7 @@ One film's arc:
 
 ```sql
 SELECT extract(epoch FROM t) / 60 AS minute,
-       joy, sadness, fear, anger, tension, surprise, valence
+       joy, sadness, fear, anger, surprise, valence
 FROM emotion_points
 WHERE work_id = $1
 ORDER BY t;
@@ -70,27 +70,29 @@ Insert a scored window:
 
 ```sql
 INSERT INTO emotion_points
-    (work_id, t, valence, joy, sadness, fear, anger, tension, surprise)
+    (work_id, t, valence, joy, sadness, fear, anger, surprise)
 VALUES
     ($1, '1970-01-01'::timestamptz + ($2 || ' milliseconds')::interval,
-     $3, $4, $5, $6, $7, $8, $9)
+     $3, $4, $5, $6, $7, $8)
 ON CONFLICT (work_id, t) DO UPDATE SET
     valence = EXCLUDED.valence, joy = EXCLUDED.joy, sadness = EXCLUDED.sadness,
-    fear = EXCLUDED.fear, anger = EXCLUDED.anger, tension = EXCLUDED.tension,
-    surprise = EXCLUDED.surprise;
+    fear = EXCLUDED.fear, anger = EXCLUDED.anger, surprise = EXCLUDED.surprise;
 ```
 
 ## Gemini scoring contract
 
 Request: a batch of windows `[{window_idx, text}, …]` with `response_mime_type = "application/json"` and [`gemini_schema.json`](./gemini_schema.json) as `response_schema`.
 
-Response: `{ "windows": [ { window_idx, valence, joy, sadness, fear, anger, tension, surprise }, … ] }`.
+Response: `{ "windows": [ { window_idx, valence, joy, sadness, fear, anger, surprise }, … ] }`.
 Map each result back to its window by `window_idx` and insert with the query above.
 
 ## Setup
 
 ```bash
-python db/run_schema.py                                   # reads TIMESCALE_SERVICE_URL from .env
-# If the old schema was already applied, first run:
+python db/run_schema.py                                   # fresh database only
+# For an existing database, after confirming every film has a year and genre:
+psql "$TIMESCALE_SERVICE_URL" -f db/migrate_remove_tension.sql
+# Only for the legacy, larger schema (this drops all stored data):
 psql "$TIMESCALE_SERVICE_URL" -f db/drop_old_schema.sql
+python db/run_schema.py
 ```
