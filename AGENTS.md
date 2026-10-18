@@ -80,11 +80,11 @@ Ownership: each teammate owns one folder (website, pipeline, db, data) to avoid 
 - `data/his_girl_friday.srt` — first movie. Its timestamps use 2-digit fractions (`00:01:01,95`), and the text looks auto-transcribed (noisy). The parser must accept 1–3 fraction digits.
 - `.gitignore`, `.env.example`, `test_gemini.py`.
 - Python must be installed locally (3.9+) with `pip install google-genai python-dotenv psycopg2-binary`. Don't commit `venv/`.
-- The configured Tiger Data database currently has five films and 170 emotion rows. The Little Princess has 40/45 scored windows and Royal Wedding has 10/46; the other three films are complete. A scoring attempt reached Gemini's free-tier daily quota (HTTP 429), so these two jobs and five additional user-authorized titles remain to be resumed after quota is available.
+- The configured Tiger Data database currently has ten films and 555 emotion rows. All ten subtitle-backed films are fully scored, including the previously partial Little Princess and Royal Wedding and the five later additions. The latest successful batch used `gemini-3.5-flash-lite` after the default model hit quota limits.
 
 **Security:** `.env` with the Tiger Data password was committed and pushed. It is now untracked, but it's still in git history, so **the Tiger Data password must be reset** in the Tiger Cloud console and everyone's local `.env` updated.
 
-**Pending:** resume the partial Little Princess and Royal Wedding jobs, then score the five additional user-authorized titles after Gemini quota is available.
+**Pending:** no movie-scoring jobs remain.
 
 ---
 

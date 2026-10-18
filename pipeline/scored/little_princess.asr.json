@@ -318,5 +318,45 @@
   "fear": 0.6,
   "anger": 0.6,
   "surprise": 0.5
+ },
+ "40": {
+  "valence": -0.2,
+  "joy": 0.1,
+  "sadness": 0.3,
+  "fear": 0.4,
+  "anger": 0.2,
+  "surprise": 0.2
+ },
+ "41": {
+  "valence": -0.4,
+  "joy": 0.1,
+  "sadness": 0.6,
+  "fear": 0.5,
+  "anger": 0.3,
+  "surprise": 0.3
+ },
+ "42": {
+  "valence": 0.1,
+  "joy": 0.3,
+  "sadness": 0.4,
+  "fear": 0.2,
+  "anger": 0.2,
+  "surprise": 0.2
+ },
+ "43": {
+  "valence": 0.5,
+  "joy": 0.7,
+  "sadness": 0.2,
+  "fear": 0.1,
+  "anger": 0.1,
+  "surprise": 0.5
+ },
+ "44": {
+  "valence": 0.7,
+  "joy": 0.8,
+  "sadness": 0.1,
+  "fear": 0.0,
+  "anger": 0.1,
+  "surprise": 0.4
  }
 }

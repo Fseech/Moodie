@@ -51,10 +51,11 @@ website after a scoring command finishes to see the movie and its scores.
 Existing databases need the one-time schema migration in
 `db/migrate_remove_tension.sql` before scoring against the updated schema.
 
-The latest scoring run hit Gemini's free-tier daily request limit (HTTP 429).
-Completed windows are cached locally; rerun an affected command after quota
-resets to resume it. The five newer titles are not in the database until their
-scoring commands complete.
+All ten subtitle-backed films are scored and loaded into the database. The five
+recently added titles are Avengers: Endgame, Fight Club, Forrest Gump, Inside
+Out 2, and Interstellar. Scored windows are cached in `pipeline/scored/` so
+interrupted jobs can resume. The latest batch used Gemini's
+`gemini-3.5-flash-lite` model because the default model was quota-limited.
 
 What it does
 Emotional arcs: turns a movie's subtitles into a minute-by-minute mood curve.
