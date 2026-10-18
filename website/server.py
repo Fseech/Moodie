@@ -18,6 +18,7 @@ from psycopg2.extras import RealDictCursor
 ROOT = Path(__file__).resolve().parent.parent
 INDEX = ROOT / "website" / "index.html"
 POSTERS_PATH = ROOT / "website" / "posters.json"
+MOVIE_IMAGES = ROOT / "movie_images"
 EMOTIONS = ("joy", "sadness", "fear", "anger", "surprise")
 load_dotenv(ROOT / ".env")
 
@@ -30,7 +31,16 @@ def load_posters():
     for title, poster in posters.items():
         if not isinstance(poster, dict):
             raise ValueError(f"Poster metadata for {title!r} must be an object.")
-        for key in ("url", "source_url", "source_name"):
+        url = poster.get("url")
+        if not isinstance(url, str) or not url.strip():
+            raise ValueError(f"Poster metadata for {title!r} requires url.")
+
+        if url.startswith("/movie_images/"):
+            if not re.fullmatch(r"/movie_images/[A-Za-z0-9_-]+\.jpg", url):
+                raise ValueError(f"Local poster URL for {title!r} must name a JPG in movie_images.")
+            continue
+
+        for key in ("source_url", "source_name"):
             if not isinstance(poster.get(key), str) or not poster[key].strip():
                 raise ValueError(f"Poster metadata for {title!r} requires {key}.")
         for key in ("url", "source_url"):
@@ -63,6 +73,11 @@ class MoodieHandler(BaseHTTPRequestHandler):
             self.serve_index()
             return
 
+        image_match = re.fullmatch(r"/movie_images/([A-Za-z0-9_-]+\.jpg)", path)
+        if image_match:
+            self.serve_movie_image(image_match.group(1))
+            return
+
         try:
             if path == "/api/films":
                 self.serve_films()
@@ -93,6 +108,22 @@ class MoodieHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def serve_movie_image(self, filename):
+        image_path = MOVIE_IMAGES / filename
+        try:
+            content = image_path.read_bytes()
+        except OSError:
+            logging.exception("Could not read movie poster %s", filename)
+            self.send_json(404, {"error": "Movie poster not found."})
+            return
+
+        self.send_response(200)
+        self.send_header("Content-Type", "image/jpeg")
+        self.send_header("Cache-Control", "no-cache")
         self.send_header("Content-Length", str(len(content)))
         self.end_headers()
         self.wfile.write(content)

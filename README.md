@@ -25,9 +25,12 @@ If no films have been scored yet, the page shows an empty state. Scoring runs
 separately through the Gemini pipeline and may use API quota.
 
 Movie poster URLs and source credits are configured in `website/posters.json`.
-Only add artwork that is public domain, openly licensed, or otherwise cleared
-for use, and include its source URL and credit. Restart the website server after
-changing this file. Movies without a configured or loadable poster keep the
+Local JPG posters can be placed in `movie_images/` and referenced with a
+`/movie_images/<filename>.jpg` URL; the website server serves files from that
+folder. Only add artwork that is public domain, openly licensed, user-provided,
+or otherwise cleared for use. Include source URLs and credits for externally
+hosted art. Restart the website server after changing the poster configuration
+or server code. Movies without a configured or loadable poster keep the
 existing gradient card header.
 
 From the `Swamphacks` directory, run the commands for the films you want to
